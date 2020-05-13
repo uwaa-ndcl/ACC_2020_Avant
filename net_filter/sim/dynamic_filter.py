@@ -18,17 +18,13 @@ def apply_filter(xyz0_hat, R0_hat, v0_hat, om0_hat, P0_hat,
 
     # process noise covariance
     q_cov_xyz = .05*np.array([1, 1, 1])
-    #q_cov_xyz = .1*np.array([1, 1, 1])
     q_cov_R = .02*np.array([1, 1, 1])
     q_cov_v = .002*np.array([1, 1, 1])
-    #q_cov_v = .1*np.array([1, 1, 1])
     q_cov_om = .005*np.array([1, 1, 1])
     q_cov = .0001*np.block([q_cov_xyz, q_cov_R, q_cov_v, q_cov_om])
     Q_cov = np.diag(q_cov)
 
     # measurement noise covariance
-    #r_cov_xyz = (1/(100**2))*np.array([37, 1758, 26]) # light energy 5.2
-    #r_cov_R = (1/((180/np.pi)**2))*np.array([686, 1128, 648]) # light energy 5.2
     r_cov_xyz = (1/(100**2))*np.array([14, 979, 9]) # light energy 6
     r_cov_R = (1/((180/np.pi)**2))*np.array([198, 586, 230]) # light energy 6
     r_cov = np.block([r_cov_xyz, r_cov_R])
@@ -42,14 +38,6 @@ def apply_filter(xyz0_hat, R0_hat, v0_hat, om0_hat, P0_hat,
     beta = 2
     kappa = 4
 
-    # bias correction
-    #xyz_meas[1,:] += .01
-    '''
-    # corrupt measurement
-    ind = 30
-    xyz_meas[:,ind] = 0
-    q_meas[:,ind] = np.array([1,0,0,0])
-    '''
     # run the unscented filter
     xyz_hat, R_hat, v_hat, om_hat, P_ALL = uf.filter(
             uf.f, uf.h, Q_cov, R_cov, xyz0_hat, R0_hat, v0_hat, om0_hat, P0_hat, U,

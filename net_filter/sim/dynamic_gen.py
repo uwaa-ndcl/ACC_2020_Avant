@@ -36,22 +36,9 @@ aov_w = 2*np.arctan((sensor_width/2)/f) # angle of view
 aov_h = 2*np.arctan((sensor_height/2)/f) 
 f_pix = pix_width*(f/sensor_width) # focal length in pixels
 
-# Blender | x: right, y: forward, z: up
-'''
-# good good
-xyz0 = np.array([-.1, .7, -.11])
-q0 = t3d.euler.euler2quat(0.2*np.pi, .2*np.pi, .0*np.pi, 'sxyz')
-v0 = np.array([.7, 0.4, 2.3])
-om0 = np.array([7, 8, 4])
-'''
-
-#
+# lighting
 RGB_color = .0*np.array([1.0, 1.0, 1.0])
-lighting_energy = 4.7 # good bad, black bkgd
-lighting_energy = 5.2 # good bad, black bkgd
-lighting_energy = 6.0 # good bad, black bkgd
-#lighting_energy = 10.0
-#lighting_energy = 7.0
+lighting_energy = 6.0
 
 def generate_images(n_t, dt, xyz, q, v, om, save_dir):
     to_render_pkl = os.path.join(save_dir, 'to_render.pkl')

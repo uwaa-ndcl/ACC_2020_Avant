@@ -27,9 +27,9 @@ inds = np.arange(n_ims)
 dt = t[1] - t[0]
 
 # initial conditions
-xyz0 = np.array([-.1, .7, -.14+.04]) # paper
-v0 = np.array([0.9, 1.1, 2.3]) # paper
-om0 = np.array([5, 8, 4]) # paper
+xyz0 = np.array([-.1, .7, -.1])
+v0 = np.array([0.9, 1.1, 2.3])
+om0 = np.array([5, 8, 4])
 q0_all = np.full((4,n_trials),np.nan)
 for i in range(n_trials):
     R0 = so3.random_rotation_matrix()
@@ -41,13 +41,7 @@ for i in range(n_trials):
     if not os.path.exists(img_dir_i):
         os.makedirs(img_dir_i)
 
-    #om0 = np.array([9, 11, 8])
-    #R0 = so3.random_rotation_matrix()
-    #q0 = t3d.quaternions.mat2quat(R0)
     q0 = q0_all[:,i]
-
-    # get orientaion
-    #q0 = q0_all[:,i]
 
     # rigid body dynamics
     q_dot0 = av.om_to_qdot(om0, q0)
@@ -63,11 +57,16 @@ for i in range(n_trials):
     for j in range(n_ims):
         om[:,j] = av.qdot_to_om(q[:,j], qdot[:,j])
 
-    # generate images (comment this if you don't want to do it again)
-    #dg.generate_images(n_ims, dt, xyz, q, v, om, img_dir_i)
+    regen_ims = False # regenerate images?
+    eval_ims = False # evaluate images?
 
-    # evaluate images (comment this if you don't want to do it again)
-    #xyz, q, xyz_est, q_est = db.get_predictions(img_dir_i)
+    # generate images?
+    if regen_ims:
+        dg.generate_images(n_ims, dt, xyz, q, v, om, img_dir_i)
+
+    # evaluate images?
+    if eval_ims:
+        xyz, q, xyz_est, q_est = db.get_predictions(img_dir_i)
 
     # load dope pose estimates
     npz_file = os.path.join(img_dir_i, 'dope_xyzq.npz')
@@ -83,31 +82,12 @@ for i in range(n_trials):
         R_meas[:,:,j] = t3d.quaternions.quat2mat(q_meas[:,j])
 
     # filter initial estimates
-    #xyz0_hat = xyz_meas[:,0] + np.array([-.2, .3, .1])
     xyz0_hat = xyz_meas[:,0] # use the true value to make it a fair comparison
-    #R0_noise = t3d.euler.euler2mat(.07, .03, .0, 'sxyz')
-    #R0_hat = R0_noise @ R_meas[:,:,0]
     R0_hat = R_meas[:,:,0] # use the true value to make it a fair comparison
-    #v0 = v[:,0]
     v0_nrm = np.linalg.norm(v0)
-    v0_hat = v0 + .5*np.array([-1.1, 1.2, 1.1])
-    v0_hat = v0 + .07*np.array([-1.1, 1.2, 1.1])
-    v0_hat = v0 + 0*.17*np.array([-1.1, 1.2, 1.1])
     v0_hat = v0 + .2*np.random.uniform(-1,1,3)
-    #v0_hat = v0 + .00*np.array([-1.1, 1.2, 1.1])
-    #om0 = np.array([5, 8, 4])
-    #om0 = om[:,0]
     om0_nrm = np.linalg.norm(om0)
-    om0_hat = om0 + .5*np.array([-1.0, 1.1, 1.0])
-    om0_hat = om0 + 1.2*np.array([-1.0, 1.1, 1.0])
-    om0_hat = om0 + 0*.5*np.array([-1.0, 1.1, 1.0])
     om0_hat = om0 + .6*np.random.uniform(-1,1,3)
-    #P0_hat = 1 * np.eye(n)
-    p0_hat = np.array([.01, .01, .01,     # p
-                       .2, .2, .2,  # s
-                       10, 80, 10,     # v
-                       #30, 30, 30]) # omega
-                       1, 1, 1]) # omega
     p0_hat = np.ones(12)
     P0_hat = np.diag(p0_hat)
 
@@ -122,12 +102,7 @@ for i in range(n_trials):
     print('xyz filter error total: ',  np.mean(xyz_err))
     print('R measur error total: ', np.mean(R_err_meas))
     print('R filter error total: ', np.mean(R_err))
-    '''
-    import matplotlib.pyplot as pp
-    pp.figure()
-    pp.plot(t, R_err)
-    pp.show()
-    '''
+
     # totals
     xyz_err_mean[i] = np.mean(xyz_err)
     xyz_err_mean_meas[i] = np.mean(xyz_err_meas)

@@ -1,10 +1,10 @@
-# TITLE!!!
+# Rigid Body Dynamics Estimation by Unscented Filtering Pose Estimation Neural Networks
 
 ![Image of Chairs](images/fig4.png)
 
 This is the code for the paper
 
-[**Observability Properties of Object Pose Estimation**](https://ieeexplore.ieee.org/document/8814791)
+[**Rigid Body Dynamics Estimation by Unscented Filtering Pose Estimation Neural Networks**]()
 
 Trevor Avant & Kristi A. Morgansen, *American Control Conference (ACC) 2020*
 
@@ -28,11 +28,16 @@ Run the following commands:
 * `python net_filter/sim/cov_gen.py` (generate the images using Blender and evaluate them using Dope)
 * `python net_filter/sim/cov_calc.py` (calculate the covariances from the Dope estimates)
 
-**Simulation (Figure 5)**: 
+**Simulation (Figure 5 \& Figure 6)**: 
+Run the following command:
+* `python net_filter/sim/dynamic_run_once.py`
+
+**Randomized Simulations (Table I)**: 
 Run the following commands:
-* `python net_filter/sim/dynamic_gen.py` (generate the images using Blender)
-* `python net_filter/sim/dynamic_eval.py` (evaluate the images using the Dope estimator)
-* `python net_filter/sim/dynamic_filter.py` (apply the filter to the Dope estimates)
+* `python net_filter/sim/dynamic_run_n_times.py`
+* `python net_filter/sim/dynamic_run_n_times_results.py`
+
+## Blender model
+In this paper, we considered our object of interest to be the soup can from the YCB dataset. The blender model we used is located in the directory `blender_models/soup_can.blend`. This model was created by downloading a laser scan model from [this page](http://ycb-benchmarks.s3-website-us-east-1.amazonaws.com/), opening it in Blender, and converting it to Blender's `.blend` format.
 
 
-## Blender models

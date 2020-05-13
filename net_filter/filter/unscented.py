@@ -7,29 +7,6 @@ import net_filter.tools.so3 as so3
 import net_filter.dynamics.angular_velocity as av
 import net_filter.dynamics.rigid_body as rb
 
-def f_constant_ang(xyz_prev, R_prev, v_prev, om_prev, w, u, dt):
-    '''
-    dynamics and integration
-    '''
-
-    # translations
-    g = 9.8
-    vz_new = v_prev[2] - g*dt
-    z_new = xyz_prev[2] + v_prev[2]*dt - .5*g*dt**2
-    v_new = np.block([v_prev[:2], vz_new]) + w[6:9]
-    xyz_new = np.block([xyz_prev[:2], z_new]) + w[:3]
-
-    # rotations
-    om_new = om_prev + w[9:]
-    tangent = dt * om_prev 
-    R_mat = so3.exp(so3.cross(tangent))
-    R_noise = so3.exp(so3.cross(w[3:6]))
-    #R_new = R_noise @ R_prev @ R_mat # orig
-    R_new = R_prev @ R_mat @ R_noise
-
-    return xyz_new, R_new, v_new, om_new
-
-
 def f(xyz_prev, R_prev, v_prev, om_prev, w, u, dt):
     '''
     rigid body dynamics

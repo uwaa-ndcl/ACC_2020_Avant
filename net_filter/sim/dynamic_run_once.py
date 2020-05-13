@@ -20,29 +20,10 @@ inds = np.arange(n_ims)
 dt = t[1] - t[0]
 
 # good bad
-xyz0 = np.array([-.1, .7, -.14+.04]) # paper
-q0 = t3d.euler.euler2quat(0.7*np.pi, .5*np.pi, .0*np.pi, 'sxyz')
-q0 = t3d.euler.euler2quat(.45*np.pi, .8*np.pi, -.2*np.pi, 'sxyz') # not bad
-#q0 = t3d.euler.euler2quat(-.7*np.pi, .3*np.pi, -.1*np.pi, 'sxyz') # paper
-#q0 = t3d.euler.euler2quat(-.8*np.pi, .7*np.pi, -.1*np.pi, 'sxyz') # paper
-q0 = t3d.euler.euler2quat(1.22, -1.31, .49, 'sxyz') # 10
-q0 = t3d.euler.euler2quat(-.70, -1.31, 2.69, 'sxyz') # 19
-q0 = t3d.euler.euler2quat(2.14, .05, -.91, 'sxyz') # 42 new
-q0 = t3d.euler.euler2quat(-.70, -1.25, 2.69, 'sxyz') # 19 new, slightly modified
-'''
-# debug
-# 7, 19, 22, 26
-# 19?, 26?, 42, 45 
-import pickle
-to_render_pkl = os.path.join(img_dir, 'to_render.pkl')
-with open(to_render_pkl, 'rb') as input:
-    render_props = pickle.load(input)
-q0 = render_props.quat[:,0]
-print(t3d.euler.quat2euler(q0, 'sxyz'))
-'''
+xyz0 = np.array([-.1, .7, -.1])
+q0 = t3d.euler.euler2quat(-.70, -1.25, 2.69, 'sxyz')
 v0 = np.array([0.9, 1.1, 2.3]) # paper
 om0 = np.array([5, 8, 4]) # paper
-#om0 = np.array([9, 11, 8])
 
 # rigid body dynamics
 q_dot0 = av.om_to_qdot(om0, q0)
@@ -58,12 +39,17 @@ om = np.full((3,n_ims), np.nan)
 for i in range(n_ims):
     om[:,i] = av.qdot_to_om(q[:,i], qdot[:,i])
 
-# generate images (comment this if you don't want to do it again)
-#dg.generate_images(n_ims, dt, xyz, q, v, om, img_dir)
-#dg.generate_snapshots(n_ims, inds, xyz, q)
+regen_ims = True # regenerate images?
+eval_ims = True # evaluate images?
 
-# evaluate images (comment this if you don't want to do it again)
-#xyz, q, xyz_est, q_est = db.get_predictions(img_dir)
+# regenerate images?
+if regen_ims:
+    dg.generate_images(n_ims, dt, xyz, q, v, om, img_dir)
+    dg.generate_snapshots(n_ims, inds, xyz, q)
+
+# evaluate images?
+if eval_ims:
+    xyz, q, xyz_est, q_est = db.get_predictions(img_dir)
 
 # load dope pose estimates
 npz_file = os.path.join(img_dir, 'dope_xyzq.npz')
@@ -79,25 +65,10 @@ for i in range(n_ims):
     R_meas[:,:,i] = t3d.quaternions.quat2mat(q_meas[:,i])
 
 # filter initial estimates
-#xyz0_hat = xyz_meas[:,0] + np.array([-.2, .3, .1])
 xyz0_hat = xyz_meas[:,0] # use  the true value to make it a fair comparison
-#R0_noise = t3d.euler.euler2mat(.07, .03, .0, 'sxyz')
-#R0_hat = R0_noise @ R_meas[:,:,0]
 R0_hat = R_meas[:,:,0] # use  the true value to make it a fair compariso
-#v0 = v[:,0]
-v0_hat = v0 + .5*np.array([-1.1, 1.2, 1.1])
 v0_hat = v0 + .2*np.array([-1.1, 1.2, 1.1])
-#om0 = np.array([5, 8, 4])
-#om0 = om[:,0]
-om0_hat = om0 + .5*np.array([-1.0, 1.1, 1.0])
 om0_hat = om0 + .6*np.array([-1.0, 1.1, 1.0])
-#om0_hat = om0 + 1.2*np.array([-1.0, 1.1, 1.0])
-#P0_hat = 1 * np.eye(n)
-p0_hat = np.array([.01, .01, .01,     # p
-                   .2, .2, .2,  # s
-                   10, 80, 10,     # v
-                   1, 1, 1]) # omega
-                   #30, 30, 30]) # omega
 p0_hat = np.ones(12)
 P0_hat = np.diag(p0_hat)
 
@@ -115,8 +86,6 @@ R_err_mean = np.mean(R_err)
 
 # print
 print('average xyz bias: ', np.mean(xyz - xyz_meas, axis=1))
-#print('xyz filter error: ',  xyz_err)
-#print('xyz measur error: ',  xyz_err_meas)
 print('xyz measur error total: ',  np.linalg.norm(xyz_err_meas))
 print('xyz filter error total: ',  np.linalg.norm(xyz_err))
 
