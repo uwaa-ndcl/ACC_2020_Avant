@@ -94,6 +94,7 @@ def conversion_and_error(t, xyz, R, v, om,
     filter_results_npz = os.path.join(save_dir, 'filter_results.npz')
     np.savez(filter_results_npz, t=t,
              xyz=xyz, xyz_meas=xyz_meas, xyz_hat=xyz_hat,
+             R=R, R_meas=R_meas, R_hat=R_hat,
              R_err=R_err, s_err=s_err, R_err_meas=R_err_meas,
              v=v, v_hat=v_hat, om=om, om_hat = om_hat,
              P_ALL=P_ALL)

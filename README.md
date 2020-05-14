@@ -45,4 +45,5 @@ In this paper, we considered our object of interest to be the soup can from the 
 
 **make the GIF**
 Run the following commands (requires Imagemagick to be installed):
+* `python net_filter/sim/box_gen.py`
 * `python net_filter/sim/box_video_comparison.py`

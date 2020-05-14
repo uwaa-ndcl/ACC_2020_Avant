@@ -23,6 +23,7 @@ cov_bright_dir =  os.path.join(results_dir, 'cov_bright/')
 cov_dim_dir =     os.path.join(results_dir, 'cov_dim/')
 snapshots_dir =   os.path.join(results_dir, 'snapshots/')
 dynamic_err_dir = os.path.join(simulation_dir, 'dynamic_err')
+animation_dir =   os.path.join(simulation_dir, 'animation/')
 
 # paper figures
 paper_figs_dir =  os.path.join(results_dir, 'paper_figs/')

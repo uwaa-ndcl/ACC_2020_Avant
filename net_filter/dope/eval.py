@@ -120,7 +120,6 @@ def eval(img_files, yaml_file, ckpt_file, draw=True, save_boxed_image=False):
                     points2d = []
                     for pair in detected_object['projected_points']:
                         points2d.append(tuple(pair))
-                    #DrawCube(points2d, draw_colors[m])
                     dd.draw_cube(draw_ob, points2d, color=draw_colors[m])
 
         open_cv_image = np.array(im)
