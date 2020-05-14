@@ -19,20 +19,20 @@ Download the soup can checkpoint file (`soup_60.pth`) from the authors of Dope f
 
 ## code
 
-**1-D Motions (Figure 3)**:
+**1-d motions (Figure 3)**:
 Run the following commands:
 * `python net_filter/sim/one_dim_gen.py` (generate the images using Blender and evaluate them using Dope, and plot the results)
 
-**Covariances (Figure 4)**:
-Run the following commands:
+**covariances (Figure 4)**:
+Run the following sequence of commands twice: once with `mode = dim` and once with `mode = bright` uncommented at the top of each (each sequence generates 1,000 images, and takes about 30 min on my computer):
 * `python net_filter/sim/cov_gen.py` (generate the images using Blender and evaluate them using Dope)
 * `python net_filter/sim/cov_calc.py` (calculate the covariances from the Dope estimates)
 
-**Simulation (Figure 5 \& Figure 6)**: 
+**simulation (Figure 5 \& Figure 6)**:
 Run the following command:
 * `python net_filter/sim/dynamic_run_once.py`
 
-**Randomized Simulations (Table I)**: 
+**randomized simulations (Table I)**: 
 Run the following commands:
 * `python net_filter/sim/dynamic_run_n_times.py`
 * `python net_filter/sim/dynamic_run_n_times_results.py`
@@ -41,3 +41,8 @@ Run the following commands:
 In this paper, we considered our object of interest to be the soup can from the YCB dataset. The blender model we used is located in the directory `blender_models/soup_can.blend`. This model was created by downloading a laser scan model from [this page](http://ycb-benchmarks.s3-website-us-east-1.amazonaws.com/), opening it in Blender, and converting it to Blender's `.blend` format.
 
 
+## extra
+
+**make the GIF**
+Run the following commands (requires Imagemagick to be installed):
+* `python net_filter/sim/box_video_comparison.py`

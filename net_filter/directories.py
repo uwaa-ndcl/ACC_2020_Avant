@@ -1,33 +1,32 @@
-'''
-these are local directories for the entire package
-they should be changed by each user
-'''
+import os
+import net_filter
 
-import os.path
+# get directory of this python package
+net_filter_file = net_filter.__file__
+net_filter_dir = os.path.dirname(net_filter_file)
+main_dir = os.path.dirname(net_filter_dir)
 
 # blender
-blender_models_dir = '/home/trevor/neural_network_filtering/blender_models/'
+blender_models_dir = os.path.join(main_dir, 'blender_models')
 
-# renders
-main_dir =       '/home/trevor/large_files/net_filter/'
-simulation_dir = os.path.join(main_dir, 'simulation/')
-#simulation_dir = '/home/trevor/large_files/net_filter/simulation_trials/19/'
-simulation_dynamic_err_dir = os.path.join(simulation_dir, 'dynamic_err')
-trials_dir =     os.path.join(main_dir, 'simulation_trials/')
-#trials_dir =     os.path.join(main_dir, 'simulation_trials_bright/')
-trans_x_dir =    os.path.join(main_dir, 'trans_x/')
-trans_y_dir =    os.path.join(main_dir, 'trans_y/')
-trans_z_dir =    os.path.join(main_dir, 'trans_z/')
-rot_x_dir =      os.path.join(main_dir, 'rot_x/')
-rot_y_dir =      os.path.join(main_dir, 'rot_y/')
-rot_z_dir =      os.path.join(main_dir, 'rot_z/')
-cov_bright_dir = os.path.join(main_dir, 'cov_bright/')
-cov_dim_dir =    os.path.join(main_dir, 'cov_dim/')
+# results
+results_dir =     os.path.join(main_dir, 'results/')
+simulation_dir =  os.path.join(results_dir, 'simulation/')
+trials_dir =      os.path.join(results_dir, 'simulation_trials/')
+trans_x_dir =     os.path.join(results_dir, 'trans_x/')
+trans_y_dir =     os.path.join(results_dir, 'trans_y/')
+trans_z_dir =     os.path.join(results_dir, 'trans_z/')
+rot_x_dir =       os.path.join(results_dir, 'rot_x/')
+rot_y_dir =       os.path.join(results_dir, 'rot_y/')
+rot_z_dir =       os.path.join(results_dir, 'rot_z/')
+cov_bright_dir =  os.path.join(results_dir, 'cov_bright/')
+cov_dim_dir =     os.path.join(results_dir, 'cov_dim/')
+snapshots_dir =   os.path.join(results_dir, 'snapshots/')
+dynamic_err_dir = os.path.join(simulation_dir, 'dynamic_err')
 
-snapshots_dir =  os.path.join(main_dir, 'snapshots/')
-paper_figs_dir = os.path.join(main_dir, 'paper_figs/')
-camera_calibration_images_dir = os.path.join(main_dir, 'camera_calibration_images/')
+# paper figures
+paper_figs_dir =  os.path.join(results_dir, 'paper_figs/')
 
 # dope
-yaml_file = '/home/trevor/neural_network_filtering/net_filter/dope/my_config.yaml'
-ckpt_file = '/home/trevor/neural_network_filtering/net_filter/dope/soup_60.pth'
+yaml_file = os.path.join(net_filter_dir, 'dope/my_config.yaml')
+ckpt_file = os.path.join(net_filter_dir, 'dope/soup_60.pth')

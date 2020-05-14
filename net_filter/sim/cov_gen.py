@@ -30,7 +30,6 @@ aov_h = 2*np.arctan((sensor_height/2)/f)
 f_pix = pix_width*(f/sensor_width) # focal length in pixels
 
 # default camera
-#R_cam = t3d.euler.euler2mat(0, np.pi/2, 0, 'sxyz')
 R_cam = t3d.euler.euler2mat(np.pi/2, 0, 0, 'sxyz')
 q_cam = t3d.quaternions.mat2quat(R_cam)
 
@@ -93,7 +92,6 @@ xyz = np.stack((x, y, z), axis=0)
 q = np.full((4, n_ims), np.nan) # to be filled
 for i in range(0, n_ims):
     R_i = so3.random_rotation_matrix() # random orientations
-    #R_i = tm.R_z(np.random.uniform(0, 2*np.pi)) # random yaw only
     q[:,i]  = t3d.quaternions.mat2quat(R_i)
 
 # different environmental cases
@@ -101,8 +99,6 @@ if mode == 'dim':
     light_energy = 6.0
 elif mode == 'bright':
     light_energy = 50.0
-#elif case == 3:
-    #light_energy = 0.2
 
 # generate
 world_RGB = np.full((3,n_ims), 0.0)

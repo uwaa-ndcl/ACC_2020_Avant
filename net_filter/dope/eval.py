@@ -102,54 +102,6 @@ def eval(img_files, yaml_file, ckpt_file, draw=True, save_boxed_image=False):
             )
             #print(detected_objects)
 
-            # TDA: plot vertex2 and maps variables
-            n_vertex2 = vertex2_np.shape[0] # should be 9
-            vertex2_dir = os.path.join(dirs.simulation_dir, 'vertex2/')
-            maps_dir = os.path.join(dirs.simulation_dir, 'maps/')
-            vertex2_file_i = os.path.join(vertex2_dir, 'vertex2_' + str(i) + '.png') 
-            maps_file_i = os.path.join(maps_dir, 'maps_' + str(i) + '.png') 
-            fig_v, ax_v = pp.subplots(3,3)
-            fig_m, ax_m = pp.subplots(3,3)
-            ind0 = [0, 0, 0, 1, 1, 1, 2, 2, 2]
-            ind1 = [0, 1, 2, 0, 1, 2, 0, 1, 2]
-            overlay = 1 # overlay vertex2 and maps on real image?
-            for j in range(n_vertex2):
-                vertex2_np_j = np.squeeze(vertex2_np[j,:,:])
-                maps_j = np.squeeze(maps[j,:,:])
-
-                # overlay
-                if overlay:
-                    # rescale to image size
-                    vertex2_rescl = cv2.resize(vertex2_np_j, (img.shape[1], img.shape[0]))
-                    vertex2_rescl = np.uint8(vertex2_rescl*255) # scale
-                    alpha = vertex2_rescl.copy()
-                    vertex2_rescl = np.dstack([vertex2_rescl]*3)
-
-                    # multiply each color channel by alpha
-                    scl_0 = np.einsum('ij,ijk->ijk', alpha, vertex2_rescl)
-                    scl_1 = np.einsum('ij,ijk->ijk', 1-alpha, img)
-                    vertex2_np_j = scl_0 + scl_1
-
-                    # rescale to image size
-                    maps_rescl = cv2.resize(maps_j, (img.shape[1], img.shape[0]))
-                    maps_rescl = np.uint8(maps_rescl*255) # scale
-                    alpha = maps_rescl.copy()
-                    maps_rescl = np.dstack([maps_rescl]*3)
-
-                    # multiply each color channel by alpha
-                    scl_0 = np.einsum('ij,ijk->ijk', alpha, maps_rescl)
-                    scl_1 = np.einsum('ij,ijk->ijk', 1-alpha, img)
-                    maps_j = scl_0 + scl_1
-
-
-                ax_v[ind0[j],ind1[j]].imshow(vertex2_np_j, cmap='Greys')
-                ax_m[ind0[j],ind1[j]].imshow(maps_j, cmap='Greys')
-
-            fig_v.savefig(vertex2_file_i, dpi=300)
-            fig_m.savefig(maps_file_i, dpi=300)
-            pp.close(fig_v)
-            pp.close(fig_m)
-
             # overlay cube on image
             for i_r, detected_object in enumerate(detected_objects):
                 if detected_object["location"] is None:

@@ -39,8 +39,8 @@ om = np.full((3,n_ims), np.nan)
 for i in range(n_ims):
     om[:,i] = av.qdot_to_om(q[:,i], qdot[:,i])
 
-regen_ims = True # regenerate images?
-eval_ims = True # evaluate images?
+regen_ims = 0 # regenerate images?
+eval_ims = 0 # evaluate images?
 
 # regenerate images?
 if regen_ims:
@@ -95,7 +95,6 @@ print('R measur error total: ', R_err_mean_meas)
 print('R filter error total: ', R_err_mean)
 
 # plot
-#fp.plot_error_dynamic()
 fp.plot_errors()
 fp.plot_3sigma()
 fp.plot_velocities()

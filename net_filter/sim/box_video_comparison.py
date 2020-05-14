@@ -24,13 +24,13 @@ tails = [os.path.split(file)[1] for file in sim_ims]
 net_ims_labeled = [os.path.join(net_labeled_dir, tail) for tail in tails]
 filter_ims_labeled = [os.path.join(filter_labeled_dir, tail) for tail in tails]
 combined_ims = [os.path.join(combined_dir, tail) for tail in tails]
-'''
+
 # debug: only do the first two images
 sim_ims = sim_ims[:2]
 net_ims = net_ims[:2]
 filter_ims = filter_ims[:2]
 n_ims = len(sim_ims)
-'''
+
 # geometry for convert command
 h, w = ti.load_im_np(sim_ims[0]).shape[:2]
 w_space = 100
