@@ -2,7 +2,7 @@ import numpy as np
 import asciiplotlib as ap
 import matplotlib.pyplot as pp
 
-import net_filter.filter.unscented as uf 
+import net_filter.dynamics.unscented_filter as uf 
 import net_filter.filter.particle as pf 
 
 def f(x, w, u, dt=1):

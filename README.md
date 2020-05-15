@@ -30,12 +30,12 @@ Run the following sequence of commands twice: once with `mode = dim` and once wi
 
 **simulation (Figure 5 \& Figure 6)**:
 Run the following command:
-* `python net_filter/sim/dynamic_run_once.py`
+* `python net_filter/sim/dynamic_run.py`
 
 **randomized simulations (Table I)**: 
 Run the following commands:
-* `python net_filter/sim/dynamic_run_n_times.py`
-* `python net_filter/sim/dynamic_run_n_times_results.py`
+* `python net_filter/sim/monte_carlo.py`
+* `python net_filter/sim/monte_carlo_results.py`
 
 ## Blender model
 In this paper, we considered our object of interest to be the soup can from the YCB dataset. The blender model we used is located in the directory `blender_models/soup_can.blend`. This model was created by downloading a laser scan model from [this page](http://ycb-benchmarks.s3-website-us-east-1.amazonaws.com/), opening it in Blender, and converting it to Blender's `.blend` format.

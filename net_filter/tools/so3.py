@@ -31,12 +31,11 @@ def exp(X):
 
     x = skew_elements(X) # vector of "angular velocities"
     theta = np.sqrt(x @ x)
-    # TO DO: do this better for small angles
-    if np.absolute(theta) < 1e-6:
+    if theta == 0.0:
         exp = np.eye(3) + 1*X + .5*(X@X)
     else:
         exp = np.eye(3) + (np.sin(theta)/theta)*X \
-                        + ((1 - np.cos(theta))/theta**2)*(X@X)
+                        + .5*((np.sin(theta/2)/(theta/2))**2)*(X@X)
 
     return exp
 

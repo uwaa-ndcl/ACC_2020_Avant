@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as pp
 
-import net_filter.filter.unscented as uf 
+import net_filter.dynamics.unscented_filter as uf 
 import net_filter.filter.particle as pf 
 
 def f(x_prev, w, u):

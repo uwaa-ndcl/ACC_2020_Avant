@@ -6,8 +6,7 @@ import matplotlib.pyplot as pp
 
 import net_filter.tools.unit_conversion as conv
 import net_filter.tools.so3 as so3
-import net_filter.filter.unscented as uf
-from net_filter.filter.unscented import f, h, filter
+import net_filter.dynamics.unscented_filter as uf
 
 
 def apply_filter(xyz0_hat, R0_hat, v0_hat, om0_hat, P0_hat,
