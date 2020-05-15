@@ -122,12 +122,12 @@ for i in range(n_renders):
     q_hat[:,i] = t3d.quaternions.mat2quat(R_hat[:,:,i])
 
 # make boxed images for neural net estimates
-clr = (221, 0, 255)
+clr_net = (221, 0, 255)
 new_dir = os.path.join(dirs.animation_dir, 'net/')
 #gen_boxes(xyz, q, clr, new_dir) # sanity check: true values
-gen_boxes(xyz_meas, q_meas, clr, new_dir)
+gen_boxes(xyz_meas, q_meas, clr_net, new_dir)
 
 # make boxed images for filter estimates
-clr = (0, 221, 255)
+clr_filt = (0, 221, 255)
 new_dir = os.path.join(dirs.animation_dir, 'filter/')
-gen_boxes(xyz_hat, q_hat, clr, new_dir)
+gen_boxes(xyz_hat, q_hat, clr_filt, new_dir)

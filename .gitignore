@@ -2,6 +2,7 @@
 *.blend1
 *.pth
 *.png
+*.gif
 *.npz
 *.pkl
 !blender_models/texture_map.png

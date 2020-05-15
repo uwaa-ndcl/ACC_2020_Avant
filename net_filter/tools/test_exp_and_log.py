@@ -37,15 +37,14 @@ theta_c = np.linspace(-1e-6, 1e-6, n)
 c = theta_c/(2*np.sin(theta_c))
 
 # print any nans
-for i in range(n):
-    if np.isnan(a[i]):
-        print('THETA A IS NAN AT THETA=', theta_a[i], '!!!')
-    if np.isnan(b[i]):
-        print('THETA B IS NAN AT THETA=', theta_b[i], '!!!')
-    if np.isnan(b_new[i]):
-        print('THETA B NEW IS NAN AT THETA=', theta_b[i], '!!!')
-    if np.isnan(c[i]):
-        print('THETA C IS NAN AT THETA=', theta_c[i], '!!!')
+a_nans = np.isnan(a)
+b_nans = np.isnan(b)
+b_new_nans = np.isnan(b_new)
+c_nans = np.isnan(c)
+print('THETA A IS NAN AT THETA =', *theta_a[a_nans], '!!!') 
+print('THETA B IS NAN AT THETA =', *theta_b[b_nans], '!!!') 
+print('THETA B NEW IS NAN AT THETA =', *theta_b[b_new_nans], '!!!') 
+print('THETA C IS NAN AT THETA =', *theta_c[c_nans], '!!!') 
 
 # very small values for logarithmic indeterminant form
 eps1 = 1e-323 # this still works! 
@@ -62,18 +61,22 @@ print('c: ', c)
 pp.figure()
 pp.subplot(5,1,1)
 pp.plot(theta_a, a)
+pp.axvline(x=theta_a[a_nans], color='k', linestyle='--')
 pp.xlabel('$\\theta$')
 pp.ylabel('$\\frac{\\sin \\theta}{\\theta}$ (exp)')
 
 pp.subplot(5,1,2)
 pp.plot(theta_b, b, label='old formula')
 pp.plot(theta_b, b_new, color='r', linestyle=':', label='new formula')
+pp.axvline(x=theta_b[b_nans], color='k', linestyle='-')
+pp.axvline(x=theta_b[b_new_nans], color='r', linestyle='--')
 pp.xlabel('$\\theta$')
 pp.ylabel('$\\frac{1 - \\cos \\theta}{\\theta^2}$ (exp)')
 pp.legend()
 
 pp.subplot(5,1,3)
 pp.plot(theta_b, b_new, color='r', linestyle=':')
+pp.axvline(x=theta_b[b_new_nans], color='r', linestyle='--')
 pp.xlabel('$\\theta$')
 pp.ylabel('$\\frac{1 - \\cos \\theta}{\\theta^2}$ (exp, new formula)')
 
@@ -87,6 +90,7 @@ pp.ylabel('$\\frac{1 - \\cos \\theta}{\\theta^2}$ (exp, no small values)')
 
 pp.subplot(5,1,5)
 pp.plot(theta_c, c)
+pp.axvline(x=theta_c[c_nans], color='k', linestyle='--')
 pp.xlabel('$\\theta$')
 pp.ylabel('$\\frac{\\theta}{2*\\sin \\theta}$ (log)')
 pp.show()
