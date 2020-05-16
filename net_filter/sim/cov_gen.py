@@ -9,7 +9,7 @@ import net_filter.tools.so3 as so3
 import net_filter.blender.render as br
 from net_filter.blender.render_properties import RenderProperties
 import net_filter.dope.eval as ev
-import net_filter.sim.dope_to_blender as db
+import net_filter.dope.dope_to_blender as db
 
 #mode = 'dim'
 mode = 'bright'

@@ -20,7 +20,7 @@ Download the soup can checkpoint file (`soup_60.pth`) from the authors of Dope f
 ## code
 
 **1-d motions (Figure 3)**:
-Run the following commands:
+Run the following command (note: there are 6 motions, after each of which a plot will appear, and you have to close the plot window to continue to the next motion.):
 * `python net_filter/sim/one_dim_gen.py` (generate the images using Blender and evaluate them using Dope, and plot the results)
 
 **covariances (Figure 4)**:

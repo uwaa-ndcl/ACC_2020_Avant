@@ -4,7 +4,7 @@ import transforms3d as t3d
 
 import net_filter.directories as dirs
 import net_filter.tools.so3 as so3
-import net_filter.sim.dope_to_blender as db
+import net_filter.dope.dope_to_blender as db
 import net_filter.dynamics.rigid_body as rb
 import net_filter.dynamics.angular_velocity as av
 import net_filter.sim.dynamic_gen as dg

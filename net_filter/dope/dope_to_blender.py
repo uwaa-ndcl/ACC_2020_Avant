@@ -40,7 +40,7 @@ def dope_to_blender(xyz_dope, q_dope, R_cam):
     # make arrays
     n = xyz_dope.shape[1]
     xyz_blend = np.full((3,n),np.nan)
-    q_blend = np.full((4,n),np.nan)
+    R_blend = np.full((3,3,n),np.nan)
 
     # convert position
     #print('xyz_dope: ', xyz_dope)
@@ -69,11 +69,11 @@ def dope_to_blender(xyz_dope, q_dope, R_cam):
             R_dope = t3d.quaternions.quat2mat(q_dope[:,i])
             ax, ang = t3d.axangles.mat2axangle(R_dope)
             ax[0] *= -1 # negate x-axis
-            R_blend = t3d.axangles.axangle2mat(ax, ang)
-            R_blend = R_cam0_to_cam @ R_blend
-        q_blend[:,i] = t3d.quaternions.mat2quat(R_blend)
+            R_blend_i = t3d.axangles.axangle2mat(ax, ang)
+            R_blend_i = R_cam0_to_cam @ R_blend_i
+        R_blend[:,:,i] = R_blend_i
 
-    return xyz_blend, q_blend
+    return xyz_blend, R_blend
 
 
 def get_predictions(img_dir, print_errors=True):
@@ -102,22 +102,19 @@ def get_predictions(img_dir, print_errors=True):
     q_dope = xyz_quat_pred[3:,:]
 
     # convert Dope predictions to Blender
-    xyz_blend, q_blend = dope_to_blender(xyz_dope, q_dope, R_cam)
-    save_npz = os.path.join(img_dir, 'dope_xyzq.npz')
-    np.savez(save_npz, xyz=xyz_blend, q=q_blend)
+    xyz_blend, R_blend = dope_to_blender(xyz_dope, q_dope, R_cam)
+    save_npz = os.path.join(img_dir, 'dope_xyzR.npz')
+    np.savez(save_npz, xyz=xyz_blend, R=R_blend)
 
     # convert quaternions to rotation matrices
     R = np.full((3,3,n_ims), np.nan)
-    R_blend = np.full((3,3,n_ims), np.nan)
     for i in range(n_ims):
         R[:,:,i] = t3d.quaternions.quat2mat(quat[:,i])
-        R_blend[:,:,i] = t3d.quaternions.quat2mat(q_blend[:,i])
 
     # print errors
     if print_errors:
         for i in range(n_ims):
-            R_est = t3d.quaternions.quat2mat(q_blend[:,i])
             print(i, 'pos error: ', np.linalg.norm(xyz[:,i] - xyz_blend[:,i]))
-            print(i, 'ang error:  ', so3.geodesic_distance(R_est, R[:,:,i]))
+            print(i, 'ang error:  ', so3.geodesic_distance(R_blend[:,:,i], R[:,:,i]))
 
-    return xyz, quat, xyz_blend, q_blend
+    return xyz, R, xyz_blend, R_blend

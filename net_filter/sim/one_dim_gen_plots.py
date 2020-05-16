@@ -22,43 +22,43 @@ R_upright = t3d.euler.euler2mat(-np.pi/2, 0, -np.pi/2, 'sxyz')
 def plot_translation_and_rotation():
 
     # load x data
-    data_dope = np.load(os.path.join(img_dir_trans_x, 'dope_xyzq.npz'))
+    data_dope = np.load(os.path.join(img_dir_trans_x, 'dope_xyzR.npz'))
     xyz_dope_x = data_dope['xyz']
     with open(os.path.join(img_dir_trans_x, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
     xyz_true_x = data_true.xyz
 
     # load y data
-    data_dope = np.load(os.path.join(img_dir_trans_y, 'dope_xyzq.npz'))
+    data_dope = np.load(os.path.join(img_dir_trans_y, 'dope_xyzR.npz'))
     xyz_dope_y = data_dope['xyz']
     with open(os.path.join(img_dir_trans_y, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
     xyz_true_y = data_true.xyz
 
     # load z data
-    data_dope = np.load(os.path.join(img_dir_trans_z, 'dope_xyzq.npz'))
+    data_dope = np.load(os.path.join(img_dir_trans_z, 'dope_xyzR.npz'))
     xyz_dope_z = data_dope['xyz']
     with open(os.path.join(img_dir_trans_z, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
     xyz_true_z = data_true.xyz
 
     # load x rotation data
-    data_dope = np.load(os.path.join(img_dir_rot_x, 'dope_xyzq.npz'))
-    q_dope_x = data_dope['q']
+    data_dope = np.load(os.path.join(img_dir_rot_x, 'dope_xyzR.npz'))
+    R_dope_x = data_dope['R']
     with open(os.path.join(img_dir_rot_x, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
     q_true_x = data_true.quat
 
     # load y rotation data
-    data_dope = np.load(os.path.join(img_dir_rot_y, 'dope_xyzq.npz'))
-    q_dope_y = data_dope['q']
+    data_dope = np.load(os.path.join(img_dir_rot_y, 'dope_xyzR.npz'))
+    R_dope_y = data_dope['R']
     with open(os.path.join(img_dir_rot_y, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
     q_true_y = data_true.quat
 
     # load z rotation data
-    data_dope = np.load(os.path.join(img_dir_rot_z, 'dope_xyzq.npz'))
-    q_dope_z = data_dope['q']
+    data_dope = np.load(os.path.join(img_dir_rot_z, 'dope_xyzR.npz'))
+    R_dope_z = data_dope['R']
     with open(os.path.join(img_dir_rot_z, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
     q_true_z = data_true.quat
@@ -72,7 +72,7 @@ def plot_translation_and_rotation():
     xyz_true_z *= conv.m_to_cm
 
     # convert rotation to tangent space representation
-    n_ims = q_dope_x.shape[1]
+    n_ims = xyz_dope_x.shape[1]
     s_x = np.full((3,n_ims), np.nan)
     s_y = np.full((3,n_ims), np.nan)
     s_z = np.full((3,n_ims), np.nan)
@@ -82,21 +82,21 @@ def plot_translation_and_rotation():
     for i in range(n_ims):
         # x
         R_i = t3d.quaternions.quat2mat(q_true_x[:,i])
-        R_est_i = t3d.quaternions.quat2mat(q_dope_x[:,i])
+        R_est_i = R_dope_x[:,:,i]
         R_offset_i = R_i.T @ R_est_i
         s_x[:,i] = so3.skew_elements(so3.log(R_i @ R_upright.T))
         s_offset_x[:,i] = so3.skew_elements(so3.log(R_offset_i))
 
         # y
         R_i = t3d.quaternions.quat2mat(q_true_y[:,i])
-        R_est_i = t3d.quaternions.quat2mat(q_dope_y[:,i])
+        R_est_i = R_dope_y[:,:,i]
         R_offset_i = R_i.T @ R_est_i
         s_y[:,i] = so3.skew_elements(so3.log(R_i @ R_upright.T))
         s_offset_y[:,i] = so3.skew_elements(so3.log(R_offset_i))
 
         # z
         R_i = t3d.quaternions.quat2mat(q_true_z[:,i])
-        R_est_i = t3d.quaternions.quat2mat(q_dope_z[:,i])
+        R_est_i = R_dope_z[:,:,i]
         R_offset_i = R_i.T @ R_est_i
         s_z[:,i] = so3.skew_elements(so3.log(R_i @ R_upright.T))
         s_offset_z[:,i] = so3.skew_elements(so3.log(R_offset_i))

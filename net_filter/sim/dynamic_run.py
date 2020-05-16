@@ -3,7 +3,7 @@ import numpy as np
 import transforms3d as t3d
 
 import net_filter.directories as dirs
-import net_filter.sim.dope_to_blender as db
+import net_filter.dope.dope_to_blender as db
 import net_filter.dynamics.rigid_body as rb
 import net_filter.dynamics.angular_velocity as av
 import net_filter.sim.dynamic_gen as dg
@@ -28,38 +28,26 @@ om0 = np.array([5, 8, 4]) # paper
 
 # rigid body dynamics
 xyz, R, v, om  = rb.integrate(t, xyz0, R0, xyzdot0, om0)
-q = np.full((4,n_ims), np.nan)
-for i in range(n_ims):
-    q[:,i] = t3d.quaternions.mat2quat(R[:,:,i])
 
-regen_ims = 0 # regenerate images?
-eval_ims = 0 # evaluate images?
+# regenerate and re-evaluate images?
+regen = 0
+if regen:
+    # regenerate images
+    dg.generate_images(n_ims, dt, xyz, R, v, om, img_dir)
+    dg.generate_snapshots(n_ims, inds, xyz, R)
 
-# regenerate images?
-if regen_ims:
-    dg.generate_images(n_ims, dt, xyz, q, v, om, img_dir)
-    dg.generate_snapshots(n_ims, inds, xyz, q)
-
-# evaluate images?
-if eval_ims:
-    xyz, q, xyz_est, q_est = db.get_predictions(img_dir)
+    # re-evaluate images
+    xyz, R, xyz_est, R_est = db.get_predictions(img_dir)
 
 # load dope pose estimates
-npz_file = os.path.join(img_dir, 'dope_xyzq.npz')
+npz_file = os.path.join(img_dir, 'dope_xyzR.npz')
 data = np.load(npz_file)
 xyz_meas = data['xyz']
-q_meas = data['q']
-
-# convert quaternions to rotation matrices
-R = np.full((3,3,n_ims),np.nan)
-R_meas = np.full((3,3,n_ims),np.nan)
-for i in range(n_ims):
-    R[:,:,i] = t3d.quaternions.quat2mat(q[:,i])
-    R_meas[:,:,i] = t3d.quaternions.quat2mat(q_meas[:,i])
+R_meas = data['R']
 
 # filter initial estimates
 xyz0_hat = xyz_meas[:,0] # use  the true value to make it a fair comparison
-R0_hat = R_meas[:,:,0] # use  the true value to make it a fair compariso
+R0_hat = R_meas[:,:,0] # use  the true value to make it a fair comparison
 xyzdot0_hat = xyzdot0 + .2*np.array([-1.1, 1.2, 1.1])
 om0_hat = om0 + .6*np.array([-1.0, 1.1, 1.0])
 p0_hat = np.ones(12)
@@ -84,7 +72,6 @@ R_filt_err_mean = np.mean(R_err)
 print('average xyz bias: ', np.mean(xyz - xyz_meas, axis=1))
 print('xyz measur error total: ',  xyz_meas_err_mean)
 print('xyz filter error total: ',  xyz_filt_err_mean)
-
 print('R measur error total: ', R_meas_err_norm)
 print('R filter error total: ', R_filt_err_norm)
 print('R measur error total: ', R_meas_err_mean)

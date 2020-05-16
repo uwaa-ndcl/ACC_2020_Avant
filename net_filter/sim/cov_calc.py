@@ -25,10 +25,10 @@ q = data.quat
 n_ims = xyz.shape[1]
 
 # load dope pose estimates
-npz_file = os.path.join(img_dir, 'dope_xyzq.npz')
+npz_file = os.path.join(img_dir, 'dope_xyzR.npz')
 data = np.load(npz_file)
 xyz_meas = data['xyz']
-q_meas = data['q']
+R_meas = data['R']
 
 # convert to cm
 xyz *= conv.m_to_cm
@@ -36,10 +36,8 @@ xyz_meas *= conv.m_to_cm
 
 # convert quaternions to rotation matrices
 R = np.full((3,3,n_ims),np.nan)
-R_meas = np.full((3,3,n_ims),np.nan)
 for i in range(n_ims):
     R[:,:,i] = t3d.quaternions.quat2mat(q[:,i])
-    R_meas[:,:,i] = t3d.quaternions.quat2mat(q_meas[:,i])
 
 # translations
 xyz_err = xyz_meas - xyz

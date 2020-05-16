@@ -1,4 +1,5 @@
 import os
+import cv2
 import pickle
 import numpy as np
 import transforms3d as t3d
@@ -7,7 +8,7 @@ import net_filter.directories as dirs
 import net_filter.blender.render as br
 from net_filter.blender.render_properties import RenderProperties
 import net_filter.dope.eval as ev
-import net_filter.sim.dope_to_blender as db
+import net_filter.dope.dope_to_blender as db
 import net_filter.tools.image as ti
 import net_filter.tools.so3 as so3
 import net_filter.sim.one_dim_gen_plots as po
@@ -43,11 +44,17 @@ q_cam = t3d.quaternions.mat2quat(R_cam)
 R_upright = t3d.euler.euler2mat(-np.pi/2, 0, -np.pi/2, 'sxyz')
 
 
-def generate_images(xyz, q, img_dir):
+def generate_images(xyz, R, img_dir):
     '''
     generate images
     '''
     n_ims = xyz.shape[1]
+
+
+    # convert rotation matrices to quaternions
+    q = np.full((4,n_ims), np.nan)
+    for i in range(n_ims):
+        q[:,i] = t3d.quaternions.mat2quat(R[:,:,i])
 
     # render
     to_render_pkl = os.path.join(img_dir, 'to_render.pkl')
@@ -72,21 +79,20 @@ def translate_x():
 
     xyz = np.full((3,n_ims), np.nan)
     R = np.full((3,3,n_ims), np.nan)
-    q = np.full((4,n_ims), np.nan)
     for i in range(n_ims):
         R[:,:,i] = R_upright
-        q[:,i] = t3d.quaternions.mat2quat(R[:,:,i])
         xyz[:,i] = np.array([x[i], .8, 0])
 
     # generate
-    generate_images(xyz, q, img_dir_trans_x)
+    generate_images(xyz, R, img_dir_trans_x)
 
     # predict
-    xyz, q, xyz_est, q_est = db.get_predictions(img_dir_trans_x, print_errors=False)
+    xyz, R, xyz_est, R_est = db.get_predictions(img_dir_trans_x, print_errors=False)
     print('bias :', xyz[0,:] - xyz_est[0,:])
     print('average bias: ', np.mean(xyz[0,:] - xyz_est[0,:]))
 
     # plot
+    cv2.destroyAllWindows() # do this to avoid segmentation fault
     pp.figure()
     pp.plot(xyz[0,:], xyz_est[0,:] - xyz[0,:], 'k-')
     pp.xlabel('x')
@@ -101,21 +107,20 @@ def translate_y():
 
     xyz = np.full((3,n_ims), np.nan)
     R = np.full((3,3,n_ims), np.nan)
-    q = np.full((4,n_ims), np.nan)
     for i in range(n_ims):
         R[:,:,i] = R_upright
-        q[:,i] = t3d.quaternions.mat2quat(R[:,:,i])
         xyz[:,i] = np.array([0, y[i], 0])
 
     # generate
-    generate_images(xyz, q, img_dir_trans_y)
+    generate_images(xyz, R, img_dir_trans_y)
 
     # predict
-    xyz, q, xyz_est, q_est = db.get_predictions(img_dir_trans_y, print_errors=False)
+    xyz, R, xyz_est, R_est = db.get_predictions(img_dir_trans_y, print_errors=False)
     print('bias: ', xyz[1,:] - xyz_est[1,:])
     print('average bias: ', np.mean(xyz[1,:] - xyz_est[1,:]))
 
     # plot
+    cv2.destroyAllWindows() # do this to avoid segmentation fault
     pp.figure()
     pp.plot(xyz[1,:], xyz_est[1,:] - xyz[1,:], 'k-')
     pp.xlabel('y')
@@ -130,21 +135,20 @@ def translate_z():
 
     xyz = np.full((3,n_ims), np.nan)
     R = np.full((3,3,n_ims), np.nan)
-    q = np.full((4,n_ims), np.nan)
     for i in range(n_ims):
         R[:,:,i] = R_upright
-        q[:,i] = t3d.quaternions.mat2quat(R[:,:,i])
         xyz[:,i] = np.array([0, .8, z[i]])
 
     # generate
-    generate_images(xyz, q, img_dir_trans_z)
+    generate_images(xyz, R, img_dir_trans_z)
 
     # predict
-    xyz, q, xyz_est, q_est = db.get_predictions(img_dir_trans_z, print_errors=False)
+    xyz, R, xyz_est, R_est = db.get_predictions(img_dir_trans_z, print_errors=False)
     print('bias: ', xyz[2,:] - xyz_est[2,:])
     print('average bias: ', np.mean(xyz[2,:] - xyz_est[2,:]))
 
     # plot
+    cv2.destroyAllWindows() # do this to avoid segmentation fault
     pp.figure()
     pp.plot(xyz[2,:], xyz_est[2,:] - xyz[2,:], 'k-')
     pp.xlabel('z')
@@ -160,28 +164,26 @@ def rotate_x():
 
     xyz = np.full((3,n_ims), np.nan)
     R = np.full((3,3,n_ims), np.nan)
-    q = np.full((4,n_ims), np.nan)
     for i in range(n_ims):
         s_i = np.array([ang[i], 0, 0])
         R[:,:,i] = so3.exp(so3.cross(s_i)) @ R_upright
-        q[:,i] = t3d.quaternions.mat2quat(R[:,:,i])
         xyz[:,i] = np.array([0, .8, 0])
 
     # generate
-    generate_images(xyz, q, img_dir_rot_x)
+    generate_images(xyz, R, img_dir_rot_x)
 
     # predict
-    xyz, q, xyz_est, q_est = db.get_predictions(img_dir_rot_x, print_errors=False)
+    xyz, R, xyz_est, R_est = db.get_predictions(img_dir_rot_x, print_errors=False)
     s_offset = np.full((3,n_ims), np.nan)
     for i in range(n_ims):
-        R_est_i = t3d.quaternions.quat2mat(q_est[:,i])
-        R_offset_i = R[:,:,i].T @ R_est_i
+        R_offset_i = R[:,:,i].T @ R_est[:,:,i]
         s_offset[:,i] = so3.skew_elements(so3.log(R_offset_i))
 
     print('bias: ', s_offset[0,:])
     print('average bias: ', np.mean(s_offset[0,:]))
 
     # plot
+    cv2.destroyAllWindows() # do this to avoid segmentation fault
     pp.figure()
     pp.plot(ang, s_offset[0,:], 'k-')
     pp.xlabel('x rot ang')
@@ -196,28 +198,26 @@ def rotate_y():
 
     xyz = np.full((3,n_ims), np.nan)
     R = np.full((3,3,n_ims), np.nan)
-    q = np.full((4,n_ims), np.nan)
     for i in range(n_ims):
         s_i = np.array([0, ang[i], 0])
         R[:,:,i] = so3.exp(so3.cross(s_i)) @ R_upright
-        q[:,i] = t3d.quaternions.mat2quat(R[:,:,i])
         xyz[:,i] = np.array([0, .8, 0])
 
     # generate
-    generate_images(xyz, q, img_dir_rot_y)
+    generate_images(xyz, R, img_dir_rot_y)
 
     # predict
-    xyz, q, xyz_est, q_est = db.get_predictions(img_dir_rot_y, print_errors=False)
+    xyz, R, xyz_est, R_est = db.get_predictions(img_dir_rot_y, print_errors=False)
     s_offset = np.full((3,n_ims), np.nan)
     for i in range(n_ims):
-        R_est_i = t3d.quaternions.quat2mat(q_est[:,i])
-        R_offset_i = R[:,:,i].T @ R_est_i
+        R_offset_i = R[:,:,i].T @ R_est[:,:,i]
         s_offset[:,i] = so3.skew_elements(so3.log(R_offset_i))
 
     print('bias: ', s_offset[1,:])
     print('average bias: ', np.mean(s_offset[1,:]))
 
     # plot
+    cv2.destroyAllWindows() # do this to avoid segmentation fault
     pp.figure()
     pp.plot(ang, s_offset[1,:], 'k-')
     pp.xlabel('y rot ang')
@@ -232,28 +232,26 @@ def rotate_z():
 
     xyz = np.full((3,n_ims), np.nan)
     R = np.full((3,3,n_ims), np.nan)
-    q = np.full((4,n_ims), np.nan)
     for i in range(n_ims):
         s_i = np.array([0, 0, ang[i]])
         R[:,:,i] = so3.exp(so3.cross(s_i)) @ R_upright
-        q[:,i] = t3d.quaternions.mat2quat(R[:,:,i])
         xyz[:,i] = np.array([0, .8, 0])
 
     # generate
-    generate_images(xyz, q, img_dir_rot_z)
+    generate_images(xyz, R, img_dir_rot_z)
 
     # predict
-    xyz, q, xyz_est, q_est = db.get_predictions(img_dir_rot_z, print_errors=False)
+    xyz, R, xyz_est, R_est = db.get_predictions(img_dir_rot_z, print_errors=False)
     s_offset = np.full((3,n_ims), np.nan)
     for i in range(n_ims):
-        R_est_i = t3d.quaternions.quat2mat(q_est[:,i])
-        R_offset_i = R[:,:,i].T @ R_est_i
+        R_offset_i = R[:,:,i].T @ R_est[:,:,i]
         s_offset[:,i] = so3.skew_elements(so3.log(R_offset_i))
 
     print('bias: ', s_offset[2,:])
     print('average bias: ', np.mean(s_offset[2,:]))
 
     # plot
+    cv2.destroyAllWindows() # do this to avoid segmentation fault
     pp.figure()
     pp.plot(ang, s_offset[2,:], 'k-')
     pp.xlabel('z rot ang')
@@ -271,7 +269,5 @@ def rotate_z():
 #rotate_y()
 #rotate_z()
 
-# plots (uncomment to plot)
-#po.plot_translation()
-#po.plot_rotation()
+# plots
 po.plot_translation_and_rotation()

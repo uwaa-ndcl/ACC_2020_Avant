@@ -40,7 +40,13 @@ f_pix = pix_width*(f/sensor_width) # focal length in pixels
 RGB_color = .0*np.array([1.0, 1.0, 1.0])
 lighting_energy = 6.0
 
-def generate_images(n_t, dt, xyz, q, v, om, save_dir):
+def generate_images(n_t, dt, xyz, R, v, om, save_dir):
+
+    # convert rotation matrices to quaternions
+    q = np.full((4,n_t), np.nan)
+    for i in range(n_t):
+        q[:,i] = t3d.quaternions.mat2quat(R[:,:,i])
+
     to_render_pkl = os.path.join(save_dir, 'to_render.pkl')
     render_props = RenderProperties()
     render_props.n_renders = n_t
@@ -61,7 +67,13 @@ def generate_images(n_t, dt, xyz, q, v, om, save_dir):
     br.blender_render(save_dir)
 
 
-def generate_snapshots(n_t, inds, xyz, q):
+def generate_snapshots(n_t, inds, xyz, R):
+    # convert rotation matrices to quaternions
+    q = np.full((4,n_t), np.nan)
+    for i in range(n_t):
+        q[:,i] = t3d.quaternions.mat2quat(R[:,:,i])
+
+    # setup
     save_dir = dirs.snapshots_dir
     to_render_pkl = os.path.join(save_dir, 'to_render.pkl')
     n_snapshot = 6 # number of snapshots for figure
@@ -70,6 +82,8 @@ def generate_snapshots(n_t, inds, xyz, q):
     if n_t % n_snapshot != 0:
         inds_snapshot = inds_snapshot[:-1]
     png_name_snapshot = 'snapshot_%06d'
+
+    # loop over snapshots
     for i in range(n_snapshot):
         ind_i = inds_snapshot[i]
         render_props = RenderProperties()
