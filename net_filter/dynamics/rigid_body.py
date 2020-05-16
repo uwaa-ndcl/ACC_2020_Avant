@@ -7,17 +7,16 @@ import net_filter.dynamics.angular_velocity as av
 
 # gravity
 g = 9.8
-'''
-# cube
-m = 1       # mass
-l = 1       # edge length of cube
-J = (1/6)*m*(l**2)*np.eye(3) # inertia matrix of cube (body frame)
-'''
-# cylinder
+
+# cylinder (i.e. the soup can)
 # note: default rotation (when R=I) is when can's symmetric axis is pointed in
 # the y-direction (away from the camera)
-r = .04
-h = .1
+r = .04 # radius (meters) (POST-SUBMISSION NOTE: THIS MAY BE A TAD TOO LARGE)
+h = .1 # height (meters)
+
+# mass (kg)
+# POST-SUBMISSION NOTE: THIS VALUE IS TOO LARGE, IT SHOULD BE ABOUT .35 kg,
+# BUT THIS DOESN'T SEEM TO MAKE A BIG DIFFERENCE IN THE SIMULATION
 m = 1
 J = np.diag([(1/12)*m*(3*r**2 + h**2), .5*m*r**2, (1/12)*m*(3*r**2 + h**2)])
 
@@ -57,7 +56,7 @@ def newton_euler(t, v_om):
     return v_om_dot
 
 
-def integrate_kinematics(v_om, xyz_q0, dt):
+def integrate_kinematics(v, om, xyz0, q0, dt):
     '''
     forward Euler integration of angular velocities v and omega,
     to x and quaternions
@@ -70,9 +69,7 @@ def integrate_kinematics(v_om, xyz_q0, dt):
         dt: timestep at which values are spaced
     '''
 
-    n_pts = v_om.shape[1]
-    v = v_om[:3,:]
-    om = v_om[3:,:]
+    n_pts = v.shape[1]
 
     # define arrays
     xyz = np.full((3, n_pts), np.nan)
@@ -80,8 +77,8 @@ def integrate_kinematics(v_om, xyz_q0, dt):
     q_dot = np.copy(q) # time derivative of quaternion
 
     # 1st order forward Euler integration
-    xyz[:,0] = xyz_q0[:3]
-    q[:,0] = xyz_q0[3:]
+    xyz[:,0] = xyz0
+    q[:,0] = q0
     q_dot[:,0] = av.om_to_qdot(om[:,0], q[:,[0]]).ravel()
     for i in range(1, n_pts):
         xyz[:,i] = xyz[:,i-1] + dt*v[:,i-1]
@@ -92,44 +89,56 @@ def integrate_kinematics(v_om, xyz_q0, dt):
         q_dot[:,i] = av.om_to_qdot(om[:,i], q[:,[i]]).ravel()
     xyz_q = np.concatenate((xyz, q)) 
 
-    return xyz_q, q_dot
+    return xyz, q, q_dot
 
 
-def integrate(t, x0):
+def integrate(t, xyz0, R0, v0, om0):
     '''
-    integrate Newton-Euler equations, then integrate kinematics
-    t: times
-    x: xyz, quaternion, xyz dot, quaternion dot
+    integrate Newton-Euler equations, then integrate kinematics (t=times)
     '''
 
     # setup
-    x0 = x0.ravel()
-    xyz_q0 = x0[:7]
-    q0 = x0[3:7]
-    v0 = x0[7:10]
-    q_dot0 = x0[10:]
-    om0 = av.qdot_to_om(q0, q_dot0)
-    v_om0 = np.concatenate((v0, om0)) 
     t0 = t[0]
     tf = t[-1]
+    n_t = t.size
+
+    # convert rotation matrix to quaternions
+    q0 = t3d.quaternions.mat2quat(R0)
+    qdot0 = av.om_to_qdot(om0, q0)
+    v_om0 = np.concatenate((v0, om0))
 
     # integration times
     dt_int = .001
     t_int = np.arange(t0, tf+dt_int, dt_int) # make sure to include last point
     tf_int = t_int[-1]
 
-    # integrate newton-euler
+    # integrate newton-euler (state is v & om)
     v_om0_col = v_om0[:,np.newaxis]
     sol = sp.integrate.solve_ivp(newton_euler, (t0, tf_int), v_om0,
                                  method='RK45', t_eval=t_int)
     v_om_int = sol.y
+    v_int = v_om_int[:3,:]
+    om_int = v_om_int[3:,:]
     
     # integrate kinematics
-    xyz_q_int, q_dot_int = integrate_kinematics(v_om_int, xyz_q0, dt_int) 
+    xyz_int, q_int, qdot_int = integrate_kinematics(
+            v_int, om_int, xyz0, q0, dt_int) 
 
-    # interpolate t values
-    x_int = np.concatenate((xyz_q_int, v_om_int[:3,:], q_dot_int), axis=0)
+    # interpolate t values using state x=(xyz,q,v,qdot)
+    x_int = np.concatenate((xyz_int, q_int, v_int, qdot_int), axis=0)
     interp_fun = sp.interpolate.interp1d(t_int, x_int)
     x = interp_fun(t)
 
-    return x
+    # convert quaterions to rotation matrix
+    xyz = x[:3,:]
+    q = x[3:7,:]
+    v = x[7:10,:]
+    qdot = x[10:,:]
+    R = np.full((3,3,n_t), np.nan)
+    om = np.full((3,n_t), np.nan)
+
+    for i in range(n_t):
+        R[:,:,i] = t3d.quaternions.quat2mat(q[:,i])
+        om[:,i] = av.qdot_to_om(q[:,i], qdot[:,i]) 
+
+    return xyz, R, v, om

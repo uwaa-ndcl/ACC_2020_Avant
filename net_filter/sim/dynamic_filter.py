@@ -9,7 +9,7 @@ import net_filter.tools.so3 as so3
 import net_filter.dynamics.unscented_filter as uf
 
 
-def apply_filter(xyz0_hat, R0_hat, v0_hat, om0_hat, P0_hat,
+def apply_filter(xyz0_hat, R0_hat, xyzdot0_hat, om0_hat, P0_hat,
                  t, dt, xyz_meas, R_meas):
 
     # get number of time points
@@ -32,17 +32,12 @@ def apply_filter(xyz0_hat, R0_hat, v0_hat, om0_hat, P0_hat,
     # run filter
     U = np.full((1, n_t), 0.0)
 
-    # filter parameters
-    alpha = 1
-    beta = 2
-    kappa = 4
-
     # run the unscented filter
-    xyz_hat, R_hat, v_hat, om_hat, P_ALL = uf.filter(
-            uf.f, uf.h, Q_cov, R_cov, xyz0_hat, R0_hat, v0_hat, om0_hat, P0_hat, U,
-            xyz_meas, R_meas, dt, alpha=1e-2, beta=2, kappa=2, tan_rot=True)
+    xyz_hat, R_hat, xyzdot_hat, om_hat, P_XX_ALL = uf.filter(
+            uf.f, uf.h, Q_cov, R_cov, xyz0_hat, R0_hat,
+            xyzdot0_hat, om0_hat, P0_hat, U, xyz_meas, R_meas, dt)
 
-    return xyz_hat, R_hat, v_hat, om_hat, P_ALL
+    return xyz_hat, R_hat, xyzdot_hat, om_hat, P_XX_ALL
 
 
 def conversion_and_error(t, xyz, R, v, om,

@@ -30,7 +30,7 @@ x0 = np.concatenate((xyz0, q0, v0, q_dot0), axis=0)
 X = rb.integrate(t, x0)
 xyz = X[:3,:]
 q = X[3:7,:]
-v = X[7:10,:]
+xyzdot = X[7:10,:]
 qdot = X[10:,:]
 
 # convert q dot to omega
@@ -54,19 +54,19 @@ for i in range(n_ims):
 
 # filter initial estimates
 xyz0_hat = xyz_meas[:,0] # use the true value to make it a fair comparison
-R0_hat = R_meas[:,:,0] # use the true value to make it a fair compariso
-v0 = v[:,0]
-v0_hat = v0 + .5*np.array([-1.1, 1.2, 1.1])
+R0_hat = R_meas[:,:,0] # use the true value to make it a fair comparison
+xyzdot0 = xyzdot[:,0]
+xyzdot0_hat = xyzdot0 + .5*np.array([-1.1, 1.2, 1.1])
 om0 = om[:,0]
 om0_hat = om0 + .5*np.array([-1.0, 1.1, 1.0])
 p0_hat = np.array([.01, .01, .01,     # p
                    .2, .2, .2,  # s
-                   10, 80, 10,     # v
+                   10, 80, 10,     # p dot
                    10, 10, 10]) # omega
 P0_hat = np.diag(p0_hat)
 
 # run filter
-xyz_hat, R_hat, v_hat, om_hat, P_ALL = df.apply_filter(xyz0_hat, R0_hat, v0_hat, om0_hat, P0_hat, t, dt, xyz_meas, R_meas)
+xyz_hat, R_hat, v_hat, om_hat, P_ALL = df.apply_filter(xyz0_hat, R0_hat, xyzdot0_hat, om0_hat, P0_hat, t, dt, xyz_meas, R_meas)
 
 om *= conv.rad_to_deg
 om_hat *= conv.rad_to_deg

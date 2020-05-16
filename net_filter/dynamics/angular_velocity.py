@@ -1,48 +1,6 @@
 import numpy as np
 import transforms3d as t3d
 
-def om_to_eulerdot(omega, euler, axes='rxyz'):
-    '''
-    convert body-fixed angular velocity into time derivatives of Euler angles
-    axes correspond to those defined in transforms3d
-    reference: Appendix B in Schaub & Junkins
-    note: 'rxyz' axes in transforms3d correspond to 1-2-3 Euler angles in
-    Schaub & Junkins
-    '''
-
-    if axes == 'rxyz':
-        s2 = np.sin(euler[1])
-        c2 = np.cos(euler[1])
-        s3 = np.sin(euler[2])
-        c3 = np.cos(euler[2])
-        mat = (1/c2) * np.array([[c3,       -s3,  0],
-                                 [c2*s3,  c2*c3,  0],
-                                 [-s2*c3, s2*s3, c2]])
-        theta_dot = mat @ omega
-       
-        return theta_dot.ravel()
-
-
-def eulerdot_to_om(euler, euler_dot, axes='rxyz'):
-    '''
-    convert euler angles to body-fixed angular velocity
-    reference: Appendix B in Schaub & Junkins
-    '''
-
-    if axes == 'rxyz':
-        s2 = np.sin(euler[1])
-        c2 = np.cos(euler[1])
-        s3 = np.sin(euler[2])
-        c3 = np.cos(euler[2])
-
-        mat = np.array([[   c2,   0, 1],
-                        [s2*s3,  c3, 0],
-                        [s2*c3, -s3, 0]])
-        om = mat @ euler_dot[:,np.newaxis] 
-
-        return om.ravel()
-
-
 def om_to_qdot(om, q):
     '''
     convert angular velocity om (expressed in body coordinates)

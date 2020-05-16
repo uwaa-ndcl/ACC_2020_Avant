@@ -7,26 +7,15 @@ import net_filter.tools.so3 as so3
 import net_filter.dynamics.angular_velocity as av
 import net_filter.dynamics.rigid_body as rb
 
-def f(xyz_prev, R_prev, v_prev, om_prev, w, u, dt):
+def f(xyz_prev, R_prev, xyzdot_prev, om_prev, w, u, dt):
     '''
     rigid body dynamics
     '''
     
     t = np.array([0, dt])
-    q_prev = t3d.quaternions.mat2quat(R_prev)
-    q_dot_prev = av.om_to_qdot(om_prev, q_prev)
-    x0 = np.concatenate((xyz_prev, q_prev, v_prev, q_dot_prev))
-    x = rb.integrate(t, x0)
+    xyz, R, xyzdot, om = rb.integrate(t, xyz_prev, R_prev, xyzdot_prev, om_prev)
 
-    xf = x[:,-1]
-    xyz_new = xf[:3]
-    q_new = xf[3:7]
-    R_new = t3d.quaternions.quat2mat(q_new)
-    v_new = xf[7:10]
-    q_dot_new = xf[10:]
-    om_new = av.qdot_to_om(q_new, q_dot_new)
-
-    return xyz_new, R_new, v_new, om_new
+    return xyz[:,-1], R[:,:,-1], xyzdot[:,-1], om[:,-1]
 
 
 def h(xyz_prev, R_prev, u, v):
@@ -36,21 +25,22 @@ def h(xyz_prev, R_prev, u, v):
 
     xyz_new = xyz_prev + v[:3]
     R_noise = so3.exp(so3.cross(v[3:]))
-    #R_new = R_noise @ R_prev 
     R_new = R_prev @ R_noise
 
     return xyz_new, R_new
 
 
-def filter(f, h, Q_cov, R_cov, xyz0_hat, R0_hat, v0_hat, om0_hat, P0_hat,
-           U, XYZ_MEAS, R_MEAS, dt, alpha=1e-2, beta=2, kappa=2, tan_rot=False):
+def filter(f, h, Q_cov, R_cov, xyz0_hat, R0_hat, xyzdot0_hat, om0_hat, P_xx_0_hat,
+           U, XYZ_MEAS, R_MEAS, dt):
     '''
     Unscented Filter from Section 3.7 of Optimal Estimation of Dynamic Systems
     (2nd ed.) by Crassidis & Junkins
-    x is
     '''
 
     # system constants
+    alpha = 1e-2
+    beta = 2
+    kappa = 2
     n = 12
     n_w = Q_cov.shape[0]
     n_v = R_cov.shape[0]
@@ -62,7 +52,7 @@ def filter(f, h, Q_cov, R_cov, xyz0_hat, R0_hat, v0_hat, om0_hat, P0_hat,
     lam = (alpha**2)*(L + kappa) - L # eq. 3.256
     gam = np.sqrt(L + lam) # eq. 3.255
 
-    # weights (eq. 3.259)
+    # weights
     W_mean = np.full(2*L + 1, np.nan)
     W_cov = np.full(2*L + 1, np.nan)
     W_mean[0] = lam/(L + lam)
@@ -70,123 +60,93 @@ def filter(f, h, Q_cov, R_cov, xyz0_hat, R0_hat, v0_hat, om0_hat, P0_hat,
     W_mean[1:] = 1/(2*(L + lam))
     W_cov[1:] = 1/(2*(L + lam))
     
-    # create arrays for saving and load initial values for the loop
+    # create arrays for saving values in the for loop
     XYZ_HAT = np.full((3, n_t), np.nan)
     R_HAT = np.full((3, 3, n_t), np.nan)
-    V_HAT = np.full((3, n_t), np.nan)
+    XYZDOT_HAT = np.full((3, n_t), np.nan)
     OM_HAT = np.full((3, n_t), np.nan)
-    P_ALL = np.full((n,n,n_t), np.nan)
+    P_XX_ALL = np.full((n,n,n_t), np.nan)
+    Y_HAT = np.full((n_y, 2*L+1), np.nan) # y_hat^(i) for i=0,...,2L
 
+    # fill arraysw with initial estimates
     XYZ_HAT[:,0] = xyz0_hat
     R_HAT[:,:,0] = R0_hat
-    V_HAT[:,0] = v0_hat
+    XYZDOT_HAT[:,0] = xyzdot0_hat
     OM_HAT[:,0] = om0_hat
+    s0_hat = np.array([0,0,0])
 
-    y_chi = np.full((n_y, 2*L + 1), np.nan)
-    tangent0_hat = so3.skew_elements(so3.log(R0_hat))
-    x_hat = np.block([xyz0_hat, tangent0_hat, v0_hat, om0_hat])
+    # initialize variables to be used in for loop
+    x_hat = np.block([xyz0_hat, s0_hat, xyzdot0_hat, om0_hat])
     x_hat = x_hat[:,np.newaxis]
-    P = P0_hat
+    P_xx = P_xx_0_hat
+    R_hat = R0_hat
 
-    if tan_rot:
-        R_hat = R0_hat
-        x_hat[3:6,:] = 0
-
+    # iterate over all time points
     for i in range(1, n_t):
         # load control and measurement at time i
         u = U[:,i]
-        R_MEAS_i = R_MEAS[:,:,i]
-        if tan_rot:
-            R_MEAS_i = R_hat.T @ R_MEAS_i
-            #R_MEAS_i = R_hat @ R_MEAS_i.T # new
-        y = np.block([XYZ_MEAS[:,i], so3.skew_elements(so3.log(R_MEAS_i))])
+        s_meas = so3.skew_elements(so3.log(R_hat.T @ R_MEAS[:,:,i])) # eq. 5
+        y = np.block([XYZ_MEAS[:,i], s_meas])
         y = y[:,np.newaxis]
-        test = so3.skew_elements(so3.log(R_MEAS_i))
 
-        # cross-correlations (usually zero, see text after eq. 3.252)
+        # cross-correlations (usually zero, see Crassidis after eq. 3.252)
         Pxw = np.full((n,n_w), 0.0)
         Pxv = np.full((n,n_v), 0.0)
         Pwv = np.full((n_w,n_v), 0.0)
 
         # sigma points
-        Pa = np.block([[P,     Pxw,   Pxv],
-                       [Pxw.T, Q_cov, Pwv],
-                       [Pxv.T, Pwv.T, R_cov]])
-        cols = gam * np.linalg.cholesky(Pa) # returns L such that Pa = L @ L.T
-        sig = np.block([cols, -cols])
-        x_hat_a = np.block([[x_hat], [np.zeros((n_w+n_v,1))]])
-        chi = np.block([x_hat_a, x_hat_a + sig])
-        x_chi = chi[:n,:]
-        w_chi = chi[n:n+n_w,:]
-        v_chi = chi[n+n_w:,:]
+        P_chi = np.block([[P_xx,  Pxw,   Pxv],
+                          [Pxw.T, Q_cov, Pwv],
+                          [Pxv.T, Pwv.T, R_cov]])
+        M = gam * np.linalg.cholesky(P_chi) # returns L such that P_chi = L @ L.T
+        sig = np.block([M, -M])
+        chi_hat_pls = np.block([[x_hat], [np.zeros((n_w+n_v,1))]])
+        CHI_HAT = np.block([chi_hat_pls, chi_hat_pls + sig]) # all chi_hat^(i) for i=0,...,2L
+        X_HAT = CHI_HAT[:n,:] # all x_hat^(i) for i=0,...,2L
+        W_HAT = CHI_HAT[n:n+n_w,:] # all w_hat^(i) for i=0,...,2L
+        V_HAT = CHI_HAT[n+n_w:,:] # all v_hat^(i) for i=0,...,2L
 
-        # propagate
-        for j in range(2*L + 1):
-
-            # integrate
-            R_j = so3.exp(so3.cross(x_chi[3:6,j]))
-            om_j = x_chi[9:,j]
-
-            if tan_rot:
-                R_j = R_hat @ R_j
-                #om_j = R_hat @ om_j
+        # iteration (over all sigma points)
+        for k in range(2*L + 1):
+            # dynamics
+            om_k = X_HAT[9:,k]
+            R_k = R_hat @ so3.exp(so3.cross(X_HAT[3:6,k]))
             xyz_new, R_new, v_new, om_new = f(
-                    x_chi[:3,j], R_j, x_chi[6:9,j], om_j, w_chi[:,j], u, dt)
-
-            tangent_new = so3.skew_elements(so3.log(R_new))
-            if tan_rot:
-                tangent_new = so3.skew_elements(so3.log(R_hat.T @ R_new))
-                #tangent_new = so3.skew_elements(so3.log(R_hat.T @ R_new)) # new
-                #om_new = R_hat.T @ om_new
-                
-            x_chi[:,j] = np.block([xyz_new, tangent_new, v_new, om_new]) 
+                    X_HAT[:3,k], R_k, X_HAT[6:9,k], om_k, W_HAT[:,k], u, dt)
+            s_new = so3.skew_elements(so3.log(R_hat.T @ R_new))
+            X_HAT[:,k] = np.block([xyz_new, s_new, v_new, om_new]) 
 
             # measurement
-            xyz_meas, R_meas = h(xyz_new, R_new, u, v_chi[:,j])
-            tangent_meas = so3.skew_elements(so3.log(R_meas))
-            if tan_rot:
-                tangent_meas = so3.skew_elements(so3.log(R_hat.T @ R_meas))
-                #tangent_meas = so3.skew_elements(so3.log(R_hat.T @ R_meas)) # new
-            y_chi[:,j] = np.block([xyz_meas, tangent_meas]) 
+            xyz_meas, R_meas = h(xyz_new, R_new, u, V_HAT[:,k])
+            s_meas = so3.skew_elements(so3.log(R_hat.T @ R_meas))
+            Y_HAT[:,k] = np.block([xyz_meas, s_meas]) 
 
         # predictions
-        x_hat = np.sum(W_mean * x_chi, axis=1)
+        x_hat = np.sum(W_mean * X_HAT, axis=1)
         x_hat = x_hat[:,np.newaxis]
-        P = W_cov * (x_chi - x_hat) @ (x_chi - x_hat).T
-        y_hat = np.sum(W_mean * y_chi, axis=1) # eq. 2.262
+        P_xx = W_cov * (X_HAT - x_hat) @ (X_HAT - x_hat).T # P_xx minus
+        y_hat = np.sum(W_mean * Y_HAT, axis=1) # eq. 2.262
         y_hat = y_hat[:,np.newaxis]
 
         # covariances
-        Pyy = W_cov * (y_chi - y_hat) @ (y_chi - y_hat).T
-        Peyey = Pyy
-        Pexey = W_cov * (x_chi - x_hat) @ (y_chi - y_hat).T
+        P_yy = W_cov * (Y_HAT - y_hat) @ (Y_HAT - y_hat).T
+        P_xy = W_cov * (X_HAT - x_hat) @ (Y_HAT - y_hat).T
 
         # update
         e = y - y_hat # eq. 3.250
-        K = Pexey @ np.linalg.inv(Peyey) # eq. 3.251
+        K = P_xy @ np.linalg.inv(P_yy) # eq. 3.251
         x_hat = x_hat + K @ e # eq. 3.249a
-        P = P - K @ Peyey @ K.T # eq. 3.249b
+        P_xx = P_xx - K @ P_yy @ K.T # eq. 3.249b
 
-        # rotate frame back to identity
+        # rotation
+        R_hat = R_hat @ so3.exp(so3.cross(x_hat[3:6].ravel()))
+        x_hat[3:6] = 0
+
+        # save values
         XYZ_HAT[:,i] = x_hat[:3].ravel()
-        R_delta = so3.exp(so3.cross(x_hat[3:6].ravel()))
-        if tan_rot:
-            #big_mat = sp.linalg.block_diag(np.eye(3), R_hat, np.eye(3), np.eye(3))
-            big_mat = sp.linalg.block_diag(np.eye(3), np.eye(3), np.eye(3), np.eye(3))
-            #big_mat = sp.linalg.block_diag(np.eye(3), R_delta, np.eye(3), np.eye(3))
-            P = big_mat @ P @ big_mat.T
-            R_hat = R_hat @ R_delta
-            x_hat[3:6] = 0
-            #om_hat = R_delta @ x_hat[9:].ravel()
-            om_hat = x_hat[9:].ravel()
-        else:
-            R_hat = R_delta
-            om_hat = x_hat[9:].ravel()
-
-        # save
-        P_ALL[:,:,i] = P
         R_HAT[:,:,i] = R_hat
-        V_HAT[:,i] = x_hat[6:9].ravel()
-        OM_HAT[:,i] = om_hat
+        XYZDOT_HAT[:,i] = x_hat[6:9].ravel()
+        OM_HAT[:,i] = x_hat[9:].ravel()
+        P_XX_ALL[:,:,i] = P_xx
 
-    return XYZ_HAT, R_HAT, V_HAT, OM_HAT, P_ALL
+    return XYZ_HAT, R_HAT, XYZDOT_HAT, OM_HAT, P_XX_ALL
