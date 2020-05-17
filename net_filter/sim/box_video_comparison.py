@@ -31,17 +31,17 @@ def plot(i):
     npz_file = os.path.join(dirs.simulation_dir, 'filter_results.npz')
     dat = np.load(npz_file)
     t = dat['t']
-    xyz = dat['xyz']
-    xyz_meas = dat['xyz_meas']
-    xyz_hat = dat['xyz_hat']
+    p = dat['p']
+    p_meas = dat['p_meas']
+    p_hat = dat['p_hat']
     R_err = dat['R_err']
     R_err_meas = dat['R_err_meas']
 
     # errors over time
-    xyz_err = np.linalg.norm(xyz_hat - xyz, axis=0)
-    xyz_err_meas = np.linalg.norm(xyz_meas - xyz, axis=0)
-    xyz_err_mean = np.mean(xyz_err)
-    xyz_err_mean_meas = np.mean(xyz_err_meas)
+    p_err = np.linalg.norm(p_hat - p, axis=0)
+    p_err_meas = np.linalg.norm(p_meas - p, axis=0)
+    p_err_mean = np.mean(p_err)
+    p_err_mean_meas = np.mean(p_err_meas)
     R_err_mean_meas = np.mean(R_err_meas)
     R_err_mean = np.mean(R_err)
 
@@ -53,10 +53,10 @@ def plot(i):
     # position
     sp1 = pp.subplot(2,1,1)
     #sp1.set_title('position error', fontsize=title_font_size)
-    pp.plot(t, xyz_err_meas, color=clr_net,
-            label='neural network (mean = %.1f)' % xyz_err_mean_meas)
-    pp.plot(t, xyz_err, color=clr_filt, linestyle='-', 
-            label='filter \hspace{48pt} (mean = %.1f)' % xyz_err_mean)
+    pp.plot(t, p_err_meas, color=clr_net,
+            label='neural network (mean = %.1f)' % p_err_mean_meas)
+    pp.plot(t, p_err, color=clr_filt, linestyle='-', 
+            label='filter \hspace{48pt} (mean = %.1f)' % p_err_mean)
     pp.axvline(x=t[i], color='k', zorder=0)
     #pp.xlabel('time [s]', fontsize=xlabel_font_size)
     #pp.ylabel('$\| \hat{\mathbf{p}} - \mathbf{p} \|$ [cm]', fontsize=xlabel_font_size)

@@ -17,7 +17,7 @@ name = 'soup_can'
 RGB_color = .0*np.array([1.0, 1.0, 1.0])
 lighting_energy = 6.0
 
-def generate_images(n_t, dt, xyz, R, v, om, save_dir):
+def generate_images(n_t, dt, p, R, v, om, save_dir):
 
     # convert rotation matrices to quaternions
     q = np.full((4,n_t), np.nan)
@@ -28,7 +28,7 @@ def generate_images(n_t, dt, xyz, R, v, om, save_dir):
     render_props = br.RenderProperties()
     render_props.n_renders = n_t
     render_props.model_name = name
-    render_props.xyz = xyz
+    render_props.pos = p
     render_props.quat = q
     #render_props.v = v # not used in rendering
     #render_props.om = om # not used in rendering
@@ -40,7 +40,7 @@ def generate_images(n_t, dt, xyz, R, v, om, save_dir):
     br.blender_render(save_dir)
 
 
-def generate_snapshots(n_t, inds, xyz, R):
+def generate_snapshots(n_t, inds, p, R):
     # convert rotation matrices to quaternions
     q = np.full((4,n_t), np.nan)
     for i in range(n_t):
@@ -62,7 +62,7 @@ def generate_snapshots(n_t, inds, xyz, R):
         render_props = br.RenderProperties()
         render_props.model_name = name
         render_props.image_names = [png_name_snapshot % ind_i]
-        render_props.xyz = xyz[:,[ind_i]]
+        render_props.pos = p[:,[ind_i]]
         render_props.quat = q[:,[ind_i]]
         render_props.world_RGB = np.repeat(RGB_color[:,np.newaxis], n_t, axis=1)
         render_props.lighting_energy = lighting_energy

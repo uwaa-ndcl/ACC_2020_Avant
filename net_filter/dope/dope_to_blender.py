@@ -8,7 +8,7 @@ import net_filter.directories as dirs
 import net_filter.dope.eval as ev
 import net_filter.tools.so3 as so3
 
-def dope_to_blender(xyz_dope, q_dope, R_cam):
+def dope_to_blender(p_dope, q_dope, R_cam):
     '''
     convert dope position and orientation to blender
     
@@ -38,29 +38,29 @@ def dope_to_blender(xyz_dope, q_dope, R_cam):
     R_cam0_to_cam = R_cam @ R_cam0.T
 
     # make arrays
-    n = xyz_dope.shape[1]
-    xyz_blend = np.full((3,n),np.nan)
+    n = p_dope.shape[1]
+    p_blend = np.full((3,n),np.nan)
     R_blend = np.full((3,3,n),np.nan)
 
     # convert position
-    #print('xyz_dope: ', xyz_dope)
-    xyz_blend = np.copy(xyz_dope)
-    xyz_blend[0,:] = -xyz_dope[2,:]
-    xyz_blend[1,:] = -xyz_dope[1,:]
-    xyz_blend[2,:] = -xyz_dope[0,:]
-    xyz_blend *= dist_ratio
-    #print('xyz default blender: ', xyz_blend)
-    xyz_blend = R_cam0_to_cam @ xyz_blend
-    #print('xyz rotated: ', xyz_blend)
+    #print('p_dope: ', p_dope)
+    p_blend = np.copy(p_dope)
+    p_blend[0,:] = -p_dope[2,:]
+    p_blend[1,:] = -p_dope[1,:]
+    p_blend[2,:] = -p_dope[0,:]
+    p_blend *= dist_ratio
+    #print('p default blender: ', p_blend)
+    p_blend = R_cam0_to_cam @ p_blend
+    #print('p rotated: ', p_blend)
 
     # loop over all images
     for i in range(n):
         # the network could not predict a pose, so set the predictions to some
         # default values
-        if np.any(np.isnan(q_dope[:,i])) or np.any(np.isnan(xyz_dope[:,i])):
+        if np.any(np.isnan(q_dope[:,i])) or np.any(np.isnan(p_dope[:,i])):
             print('image', i, 'could not be predicted')
             R_blend = np.eye(3)
-            xyz_blend[:,i] = np.array([0,0,0])
+            p_blend[:,i] = np.array([0,0,0])
 
         # the network predicted a pose, so convert it to our coordinate frame
         else:
@@ -73,7 +73,7 @@ def dope_to_blender(xyz_dope, q_dope, R_cam):
             R_blend_i = R_cam0_to_cam @ R_blend_i
         R_blend[:,:,i] = R_blend_i
 
-    return xyz_blend, R_blend
+    return p_blend, R_blend
 
 
 def get_predictions(img_dir, print_errors=True):
@@ -85,9 +85,9 @@ def get_predictions(img_dir, print_errors=True):
     data_pkl = os.path.join(img_dir, 'to_render.pkl')
     with open(data_pkl, 'rb') as f:
         data = pickle.load(f)
-    xyz = data.xyz
+    p = data.pos
     quat = data.quat
-    xyz_quat = np.block([[xyz], [quat]])
+    p_quat = np.block([[p], [quat]])
     R_cam = t3d.quaternions.quat2mat(data.cam_quat)
 
     # images in directory
@@ -97,14 +97,14 @@ def get_predictions(img_dir, print_errors=True):
     n_ims = len(img_files)
 
     # run Dope evaluation
-    xyz_quat_pred = ev.eval(img_files, dirs.yaml_file, dirs.ckpt_file, draw=True, save_boxed_image=True)
-    xyz_dope = xyz_quat_pred[:3,:]
-    q_dope = xyz_quat_pred[3:,:]
+    p_quat_pred = ev.eval(img_files, dirs.yaml_file, dirs.ckpt_file, draw=True, save_boxed_image=True)
+    p_dope = p_quat_pred[:3,:]
+    q_dope = p_quat_pred[3:,:]
 
     # convert Dope predictions to Blender
-    xyz_blend, R_blend = dope_to_blender(xyz_dope, q_dope, R_cam)
-    save_npz = os.path.join(img_dir, 'dope_xyzR.npz')
-    np.savez(save_npz, xyz=xyz_blend, R=R_blend)
+    p_blend, R_blend = dope_to_blender(p_dope, q_dope, R_cam)
+    save_npz = os.path.join(img_dir, 'dope_pR.npz')
+    np.savez(save_npz, p=p_blend, R=R_blend)
 
     # convert quaternions to rotation matrices
     R = np.full((3,3,n_ims), np.nan)
@@ -114,7 +114,7 @@ def get_predictions(img_dir, print_errors=True):
     # print errors
     if print_errors:
         for i in range(n_ims):
-            print(i, 'pos error: ', np.linalg.norm(xyz[:,i] - xyz_blend[:,i]))
+            print(i, 'pos error: ', np.linalg.norm(p[:,i] - p_blend[:,i]))
             print(i, 'ang error:  ', so3.geodesic_distance(R_blend[:,:,i], R[:,:,i]))
 
-    return xyz, R, xyz_blend, R_blend
+    return p, R, p_blend, R_blend

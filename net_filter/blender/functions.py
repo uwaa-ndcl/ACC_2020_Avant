@@ -75,10 +75,10 @@ def render_pose(render_props):
         # render image i
         render_image(
             cam_ob=render_props.cam_ob,
-            cam_pos=render_props.cam_xyz,
+            cam_pos=render_props.cam_pos,
             cam_quat=render_props.cam_quat,
             ob=render_props.ob,
-            ob_pos=render_props.xyz[:,i],
+            ob_pos=render_props.pos[:,i],
             ob_quat=render_props.quat[:,i],
             image_file=image_file_i,
             alpha=render_props.alpha,

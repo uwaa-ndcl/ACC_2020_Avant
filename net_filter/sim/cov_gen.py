@@ -30,18 +30,18 @@ aov_w = 2*np.arctan((sensor_width/2)/f) # angle of view
 aov_h = 2*np.arctan((sensor_height/2)/f) 
 f_pix = pix_width*(f/sensor_width) # focal length in pixels
 
-def generate_images(xyz, q, world_RGB, light_energy):
+def generate_images(p, q, world_RGB, light_energy):
     '''
     generate images
     '''
-    n_ims = xyz.shape[1]
+    n_ims = p.shape[1]
 
     # render
     to_render_pkl = os.path.join(img_dir, 'to_render.pkl')
     render_props = br.RenderProperties()
     render_props.n_renders = n_ims
     render_props.model_name = 'soup_can'
-    render_props.xyz = xyz
+    render_props.pos = p
     render_props.quat = q
     render_props.world_RGB = world_RGB 
     render_props.lighting_energy = light_energy
@@ -77,7 +77,7 @@ for i in range(n_ims):
     #x[i] = 0
     #z[i] = 0
 
-xyz = np.stack((x, y, z), axis=0)
+p = np.stack((x, y, z), axis=0)
 
 # rotations
 q = np.full((4, n_ims), np.nan) # to be filled
@@ -87,9 +87,9 @@ for i in range(0, n_ims):
 
 # generate
 world_RGB = np.full((3,n_ims), 0.0)
-generate_images(xyz, q, world_RGB, light_energy)
+generate_images(p, q, world_RGB, light_energy)
 
 # predict
-xyz, q, xyz_est, q_est = db.get_predictions(img_dir, print_errors=False)
-print('bias: ', xyz[1,:] - xyz_est[1,:])
-print('average bias: ', np.mean(xyz[1,:] - xyz_est[1,:]))
+p, q, p_est, q_est = db.get_predictions(img_dir, print_errors=False)
+print('bias: ', p[1,:] - p_est[1,:])
+print('average bias: ', np.mean(p[1,:] - p_est[1,:]))

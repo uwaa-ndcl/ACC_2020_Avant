@@ -21,7 +21,7 @@ class RenderProperties:
         # object
         self.ob = None # this will be set inside of Blender
         self.n_renders = 1
-        self.xyz = np.array([[0],[0],[0]]) # size (3, n_renders)
+        self.pos = np.array([[0],[0],[0]]) # size (3, n_renders)
         self.quat = np.array([[1],[0],[0],[0]]) # size (4, n_renders)
 
         # world lighting, size (3, n_renders)
@@ -35,7 +35,7 @@ class RenderProperties:
 
         # camera
         self.cam_ob = None # this will be set inside of Blender
-        self.cam_xyz = [0, 0, 0]
+        self.cam_pos = [0, 0, 0]
         self.cam_quat = t3d.euler.euler2quat(np.pi/2, 0, 0, axes='sxyz')
         self.pix_width = 640
         self.pix_height = 480

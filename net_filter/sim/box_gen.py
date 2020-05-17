@@ -42,7 +42,7 @@ box_def = np.array([[x_max, x_min, x_min, x_max, x_max, x_min, x_min, x_max],
                     [y_min, y_min, y_min, y_min, y_max, y_max, y_max, y_max],
                     [z_max, z_max, z_min, z_min, z_max, z_max, z_min, z_min]])
 
-def gen_boxes(xyz, q, clr, new_dir):
+def gen_boxes(p, q, clr, new_dir):
     '''
     overlay bounding boxes on rendered images
     '''
@@ -54,16 +54,16 @@ def gen_boxes(xyz, q, clr, new_dir):
     new_im_files = [os.path.join(new_dir, tail) for tail in tails]
 
     # loop over images
-    n_renders = xyz.shape[1]
+    n_renders = p.shape[1]
     for i in range(n_renders):
         # translate and rotate bounding box
-        xyz_i = xyz[:,i]
+        p_i = p[:,i]
         q_i = q[:,i]
         R_i = t3d.quaternions.quat2mat(q_i)
-        xyz_mat = np.repeat(xyz_i[:,np.newaxis], 8, axis=1)
+        p_mat = np.repeat(p_i[:,np.newaxis], 8, axis=1)
         box_i = np.copy(box_def)
         box_i = R_i @ box_i
-        box_i += xyz_mat
+        box_i += p_mat
 
         # convert bounding box x,y,z coordinates to pixels coordinates
         cx = pix_width//2
@@ -94,23 +94,23 @@ def gen_boxes(xyz, q, clr, new_dir):
 
 '''
 name = 'original'
-xyz = render_props.xyz
+p = render_props.pos
 q = render_props.quat
 clr = (0, 255, 0)
 new_dir = os.path.join(dirs.simulation_dir, 'original/')
-gen_boxes(xyz, q, clr, new_dir)
+gen_boxes(p, q, clr, new_dir)
 '''
 
 # load data
 npz_file = os.path.join(dirs.simulation_dir, 'filter_results.npz')
 data = np.load(npz_file)
-xyz = data['xyz']*conv.cm_to_m
-xyz_meas = data['xyz_meas']*conv.cm_to_m
-xyz_hat = data['xyz_hat']*conv.cm_to_m
+p = data['p']*conv.cm_to_m
+p_meas = data['p_meas']*conv.cm_to_m
+p_hat = data['p_hat']*conv.cm_to_m
 R = data['R']
 R_meas = data['R_meas']
 R_hat = data['R_hat']
-n_renders = xyz_meas.shape[1]
+n_renders = p_meas.shape[1]
 
 # convert R to quat
 q = np.full((4, n_renders), np.nan)
@@ -124,10 +124,10 @@ for i in range(n_renders):
 # make boxed images for neural net estimates
 clr_net = (221, 0, 255)
 new_dir = os.path.join(dirs.animation_dir, 'net/')
-#gen_boxes(xyz, q, clr, new_dir) # sanity check: true values
-gen_boxes(xyz_meas, q_meas, clr_net, new_dir)
+#gen_boxes(p, q, clr, new_dir) # sanity check: true values
+gen_boxes(p_meas, q_meas, clr_net, new_dir)
 
 # make boxed images for filter estimates
 clr_filt = (0, 221, 255)
 new_dir = os.path.join(dirs.animation_dir, 'filter/')
-gen_boxes(xyz_hat, q_hat, clr_filt, new_dir)
+gen_boxes(p_hat, q_hat, clr_filt, new_dir)

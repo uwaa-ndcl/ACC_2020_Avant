@@ -9,55 +9,54 @@ import net_filter.tools.so3 as so3
 import net_filter.dynamics.unscented_filter as uf
 
 
-def apply_filter(xyz0_hat, R0_hat, xyzdot0_hat, om0_hat, P0_hat,
-                 t, dt, xyz_meas, R_meas):
+def apply_filter(p0_hat, R0_hat, pdot0_hat, om0_hat, COV_xx_0_hat,
+                 t, dt, p_meas, R_meas):
 
     # get number of time points
     n_t = len(t)
 
-    # process noise covariance
-    q_cov_xyz = .05*np.array([1, 1, 1])
-    q_cov_R = .02*np.array([1, 1, 1])
-    q_cov_v = .002*np.array([1, 1, 1])
-    q_cov_om = .005*np.array([1, 1, 1])
-    q_cov = .0001*np.block([q_cov_xyz, q_cov_R, q_cov_v, q_cov_om])
-    Q_cov = np.diag(q_cov)
+    # process noise (w) covariance
+    cov_p = .05*np.array([1, 1, 1])
+    cov_R = .02*np.array([1, 1, 1])
+    cov_pdot = .002*np.array([1, 1, 1])
+    cov_om = .005*np.array([1, 1, 1])
+    cov_ww = .0001*np.block([cov_p, cov_R, cov_pdot, cov_om])
+    COV_ww = np.diag(cov_ww)
 
-    # measurement noise covariance
-    r_cov_xyz = (1/(100**2))*np.array([14, 979, 9]) # light energy 6
-    r_cov_R = (1/((180/np.pi)**2))*np.array([198, 586, 230]) # light energy 6
-    r_cov = np.block([r_cov_xyz, r_cov_R])
-    R_cov = np.diag(r_cov)
+    # measurement noise (v) covariance
+    cov_p = (1/(100**2))*np.array([14, 979, 9]) # light energy 6
+    cov_R = (1/((180/np.pi)**2))*np.array([198, 586, 230]) # light energy 6
+    cov_vv = np.block([cov_p, cov_R])
+    COV_vv = np.diag(cov_vv)
 
     # run filter
     U = np.full((1, n_t), 0.0)
 
     # run the unscented filter
-    xyz_hat, R_hat, xyzdot_hat, om_hat, P_XX_ALL = uf.filter(
-            uf.f, uf.h, Q_cov, R_cov, xyz0_hat, R0_hat,
-            xyzdot0_hat, om0_hat, P0_hat, U, xyz_meas, R_meas, dt)
+    p_hat, R_hat, pdot_hat, om_hat, COV_XX_ALL = uf.filter(
+            uf.f, uf.h, p0_hat, R0_hat, pdot0_hat, om0_hat,
+            COV_xx_0_hat, COV_ww, COV_vv, U, p_meas, R_meas, dt)
 
-    return xyz_hat, R_hat, xyzdot_hat, om_hat, P_XX_ALL
+    return p_hat, R_hat, pdot_hat, om_hat, COV_XX_ALL
 
 
-def conversion_and_error(t, xyz, R, v, om,
-                         xyz_hat, R_hat, v_hat, om_hat,
-                         P_ALL,
-                         xyz_meas, R_meas, save_dir):
+def conversion_and_error(t, p, R, pdot, om,
+                         p_hat, R_hat, pdot_hat, om_hat,
+                         p_meas, R_meas, COV_XX_ALL, save_dir):
 
     # determine n_ims
-    n_ims = xyz.shape[1]
+    n_ims = p.shape[1]
 
     # translation: convert to cm
-    xyz *= conv.m_to_cm
-    xyz_meas *= conv.m_to_cm
-    xyz_hat *= conv.m_to_cm
-    v *= conv.m_to_cm
-    v_hat *= conv.m_to_cm
+    p *= conv.m_to_cm
+    p_meas *= conv.m_to_cm
+    p_hat *= conv.m_to_cm
+    pdot *= conv.m_to_cm
+    pdot_hat *= conv.m_to_cm
     
     # translation: errors
-    xyz_err = np.linalg.norm(xyz_hat - xyz, axis=0)
-    xyz_err_meas = np.linalg.norm(xyz_meas - xyz, axis=0)
+    p_err = np.linalg.norm(p_hat - p, axis=0)
+    p_err_meas = np.linalg.norm(p_meas - p, axis=0)
 
     # rotation: errors
     R_err = np.full(n_ims, np.nan)
@@ -76,21 +75,21 @@ def conversion_and_error(t, xyz, R, v, om,
     om_hat *= conv.rad_to_deg
 
     # translation and rotation: convert covariance
-    xyz_unit_vec = np.tile(conv.m_to_cm, 6)
+    p_unit_vec = np.tile(conv.m_to_cm, 6)
     R_unit_vec = np.tile(conv.rad_to_deg, 6)
-    unit_vec = np.block([xyz_unit_vec, R_unit_vec])
+    unit_vec = np.block([p_unit_vec, R_unit_vec])
     UNIT_MAT = np.diag(unit_vec)
-    P_ALL_OLD = np.copy(P_ALL)
+    COV_XX_ALL_OLD = np.copy(COV_XX_ALL)
     for i in range(n_ims):
-        P_ALL[:,:,i] = UNIT_MAT @ P_ALL[:,:,i] @ UNIT_MAT 
+        COV_XX_ALL[:,:,i] = UNIT_MAT @ COV_XX_ALL[:,:,i] @ UNIT_MAT 
 
     # save to file
     filter_results_npz = os.path.join(save_dir, 'filter_results.npz')
     np.savez(filter_results_npz, t=t,
-             xyz=xyz, xyz_meas=xyz_meas, xyz_hat=xyz_hat,
+             p=p, p_meas=p_meas, p_hat=p_hat,
              R=R, R_meas=R_meas, R_hat=R_hat,
              R_err=R_err, s_err=s_err, R_err_meas=R_err_meas,
-             v=v, v_hat=v_hat, om=om, om_hat = om_hat,
-             P_ALL=P_ALL)
+             pdot=pdot, pdot_hat=pdot_hat, om=om, om_hat = om_hat,
+             COV_XX_ALL=COV_XX_ALL)
 
-    return xyz, R, v, om, xyz_hat, R_hat, v_hat, om_hat, P_ALL, xyz_meas, R_meas, xyz_err, xyz_err_meas, R_err, R_err_meas
+    return p, R, pdot, om, p_hat, R_hat, pdot_hat, om_hat, p_meas, R_meas, p_err, p_err_meas, R_err, R_err_meas, COV_XX_ALL

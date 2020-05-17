@@ -6,17 +6,16 @@ import net_filter.directories as dirs
 import net_filter.tools.so3 as so3
 import net_filter.dope.dope_to_blender as db
 import net_filter.dynamics.rigid_body as rb
-import net_filter.dynamics.angular_velocity as av
 import net_filter.sim.dynamic_gen as dg
 import net_filter.sim.dynamic_filter as df
 import net_filter.sim.dynamic_filter_plots as fp
 
 # set up
-n_trials = 100
+n_trials = 10
 np.random.seed(82)
 
-xyz_err_mean = np.full(n_trials, np.nan)
-xyz_err_mean_meas = np.full(n_trials, np.nan)
+p_err_mean = np.full(n_trials, np.nan)
+p_err_mean_meas = np.full(n_trials, np.nan)
 R_err_mean_meas = np.full(n_trials, np.nan)
 R_err_mean = np.full(n_trials, np.nan)
 
@@ -27,88 +26,64 @@ inds = np.arange(n_ims)
 dt = t[1] - t[0]
 
 # initial conditions
-xyz0 = np.array([-.1, .7, -.1])
-v0 = np.array([0.9, 1.1, 2.3])
+p0 = np.array([-.1, .7, -.1])
+pdot0 = np.array([0.9, 1.1, 2.3])
 om0 = np.array([5, 8, 4])
-q0_all = np.full((4,n_trials),np.nan)
+R0_all = np.full((3,3,n_trials),np.nan)
 for i in range(n_trials):
-    R0 = so3.random_rotation_matrix()
-    q0_all[:,i] = t3d.quaternions.mat2quat(R0)
+    R0_all[:,:,i] = so3.random_rotation_matrix()
 
 for i in range(n_trials):
     # directory
-    img_dir_i = os.path.join(dirs.trials_dir, str(i) + '/')
+    img_dir_i = os.path.join(dirs.monte_carlo_dir, str(i) + '/')
     if not os.path.exists(img_dir_i):
         os.makedirs(img_dir_i)
 
-    q0 = q0_all[:,i]
+    R0 = R0_all[:,:,i]
 
     # rigid body dynamics
-    q_dot0 = av.om_to_qdot(om0, q0)
-    x0 = np.concatenate((xyz0, q0, v0, q_dot0), axis=0)
-    X = rb.integrate(t, x0)
-    xyz = X[:3,:]
-    q = X[3:7,:]
-    v = X[7:10,:]
-    qdot = X[10:,:]
+    p, R, pdot, om = rb.integrate(t, p0, R0, pdot0, om0)
 
-    # convert q dot to omega
-    om = np.full((3,n_ims), np.nan)
-    for j in range(n_ims):
-        om[:,j] = av.qdot_to_om(q[:,j], qdot[:,j])
-
-    regen_ims = False # regenerate images?
-    eval_ims = False # evaluate images?
-
-    # generate images?
-    if regen_ims:
-        dg.generate_images(n_ims, dt, xyz, q, v, om, img_dir_i)
-
-    # evaluate images?
-    if eval_ims:
-        xyz, q, xyz_est, q_est = db.get_predictions(img_dir_i)
+    # regenerate and re-evaluate images?
+    regen = 0
+    if regen:
+        dg.generate_images(n_ims, dt, p, R, pdot, om, img_dir_i)
+        p, R, p_est, R_est = db.get_predictions(img_dir_i)
 
     # load dope pose estimates
-    npz_file = os.path.join(img_dir_i, 'dope_xyzq.npz')
+    npz_file = os.path.join(img_dir_i, 'dope_pR.npz')
     data = np.load(npz_file)
-    xyz_meas = data['xyz']
-    q_meas = data['q']
-
-    # convert quaternions to rotation matrices
-    R = np.full((3,3,n_ims),np.nan)
-    R_meas = np.full((3,3,n_ims),np.nan)
-    for j in range(n_ims):
-        R[:,:,j] = t3d.quaternions.quat2mat(q[:,j])
-        R_meas[:,:,j] = t3d.quaternions.quat2mat(q_meas[:,j])
+    p_meas = data['p']
+    R_meas = data['R']
 
     # filter initial estimates
-    xyz0_hat = xyz_meas[:,0] # use the true value to make it a fair comparison
+    p0_hat = p_meas[:,0] # use the true value to make it a fair comparison
     R0_hat = R_meas[:,:,0] # use the true value to make it a fair comparison
-    v0_nrm = np.linalg.norm(v0)
-    v0_hat = v0 + .2*np.random.uniform(-1,1,3)
+    pdot0_nrm = np.linalg.norm(pdot0)
+    pdot0_hat = pdot0 + .2*np.random.uniform(-1,1,3)
     om0_nrm = np.linalg.norm(om0)
     om0_hat = om0 + .6*np.random.uniform(-1,1,3)
-    p0_hat = np.ones(12)
-    P0_hat = np.diag(p0_hat)
+    cov_xx_0_hat = np.ones(12)
+    COV_xx_0_hat = np.diag(cov_xx_0_hat)
 
     # run filter
-    xyz_hat, R_hat, v_hat, om_hat, P_ALL = df.apply_filter(xyz0_hat, R0_hat, v0_hat, om0_hat, P0_hat, t, dt, xyz_meas, R_meas)
+    p_hat, R_hat, pdot_hat, om_hat, COV_XX_ALL = df.apply_filter(p0_hat, R0_hat, pdot0_hat, om0_hat, COV_xx_0_hat, t, dt, p_meas, R_meas)
 
     # convert outputs and calculate errors
-    xyz, R, v, om, xyz_hat, R_hat, v_hat, om_hat, P_ALL, xyz_meas, R_meas, xyz_err, xyz_err_meas, R_err, R_err_meas = df.conversion_and_error(t, xyz, R, v, om, xyz_hat, R_hat, v_hat, om_hat, P_ALL, xyz_meas, R_meas, img_dir_i)
+    p, R, v, om, p_hat, R_hat, pdot_hat, om_hat, p_meas, R_meas, p_err, p_err_meas, R_err, R_err_meas, COV_XX_ALL = df.conversion_and_error(t, p, R, pdot, om, p_hat, R_hat, pdot_hat, om_hat, p_meas, R_meas, COV_XX_ALL, img_dir_i)
 
     # print
-    print('xyz measur error total: ',  np.mean(xyz_err_meas))
-    print('xyz filter error total: ',  np.mean(xyz_err))
+    print('p measur error total: ',  np.mean(p_err_meas))
+    print('p filter error total: ',  np.mean(p_err))
     print('R measur error total: ', np.mean(R_err_meas))
     print('R filter error total: ', np.mean(R_err))
 
     # totals
-    xyz_err_mean[i] = np.mean(xyz_err)
-    xyz_err_mean_meas[i] = np.mean(xyz_err_meas)
+    p_err_mean[i] = np.mean(p_err)
+    p_err_mean_meas[i] = np.mean(p_err_meas)
     R_err_mean[i] = np.mean(R_err)
     R_err_mean_meas[i] = np.mean(R_err_meas)
 
 # save all results
 trials_npz = os.path.join(dirs.trials_dir, 'trials.npz')
-np.savez(trials_npz, xyz_err_mean=xyz_err_mean, xyz_err_mean_meas=xyz_err_mean_meas, R_err_mean=R_err_mean, R_err_mean_meas=R_err_mean_meas)
+np.savez(trials_npz, p_err_mean=p_err_mean, p_err_mean_meas=p_err_mean_meas, R_err_mean=R_err_mean, R_err_mean_meas=R_err_mean_meas)

@@ -20,19 +20,19 @@ elif mode == 'bright':
 data_pkl = os.path.join(img_dir, 'to_render.pkl')
 with open(data_pkl, 'rb') as f:
     data = pickle.load(f)
-xyz = data.xyz
+p = data.pos
 q = data.quat
-n_ims = xyz.shape[1]
+n_ims = p.shape[1]
 
 # load dope pose estimates
-npz_file = os.path.join(img_dir, 'dope_xyzR.npz')
+npz_file = os.path.join(img_dir, 'dope_pR.npz')
 data = np.load(npz_file)
-xyz_meas = data['xyz']
+p_meas = data['p']
 R_meas = data['R']
 
 # convert to cm
-xyz *= conv.m_to_cm
-xyz_meas *= conv.m_to_cm
+p *= conv.m_to_cm
+p_meas *= conv.m_to_cm
 
 # convert quaternions to rotation matrices
 R = np.full((3,3,n_ims),np.nan)
@@ -40,9 +40,9 @@ for i in range(n_ims):
     R[:,:,i] = t3d.quaternions.quat2mat(q[:,i])
 
 # translations
-xyz_err = xyz_meas - xyz
-xyz_mean = np.mean(xyz_err, axis=1)
-xyz_normal = xyz_err - np.tile(xyz_mean[:,np.newaxis],n_ims) # subtract mean
+p_err = p_meas - p
+p_mean = np.mean(p_err, axis=1)
+p_normal = p_err - np.tile(p_mean[:,np.newaxis],n_ims) # subtract mean
 
 # rotations
 R = np.full((3,3,n_ims), np.nan)
@@ -51,7 +51,7 @@ s = np.full((3,n_ims), np.nan)
 
 # covariances
 cov_s = np.full((3,3), 0.0)
-cov_xyz = np.full((3,3), 0.0)
+cov_p = np.full((3,3), 0.0)
 cov_state = np.full((6,6), 0.0)
 
 for i in range(n_ims):
@@ -70,28 +70,28 @@ s_normal = s - np.tile(s_mean[:,np.newaxis], n_ims)
 
 # compute covariances
 for i in range(n_ims):
-    cov_xyz += xyz_normal[:,[i]] @ xyz_normal[:,[i]].T
+    cov_p += p_normal[:,[i]] @ p_normal[:,[i]].T
     cov_s += s[:,[i]] @ s[:,[i]].T # mean s is 0, so we don't need to subtract it
     #cov_s += s_normal[:,[i]] @ s_normal[:,[i]].T # mean s is 0, so we don't need to subtract it
 
     # full state
-    state = np.block([xyz_normal[:,i], s_normal[:,i]])
+    state = np.block([p_normal[:,i], s_normal[:,i]])
     state = state[:,np.newaxis]
     cov_state += state @ state.T
 
 # average sum of covariances
-cov_xyz *= 1/(n_ims - 1)
+cov_p *= 1/(n_ims - 1)
 cov_s *= 1/(n_ims - 1)
 cov_state *= 1/(n_ims - 1)
 
 # covariance mean
-state_mean = np.block([xyz_mean, s_mean])
+state_mean = np.block([p_mean, s_mean])
 
 # print results
-#print('mean xyz')
-#print(xyz_mean)
-#print('covariance xyz')
-#print(cov_xyz)
+#print('mean p')
+#print(p_mean)
+#print('covariance p')
+#print(cov_p)
 #print('covariance s')
 #print(cov_s)
 print('mean state')

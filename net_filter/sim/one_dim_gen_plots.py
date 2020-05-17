@@ -22,57 +22,57 @@ R_upright = t3d.euler.euler2mat(-np.pi/2, 0, -np.pi/2, 'sxyz')
 def plot_translation_and_rotation():
 
     # load x data
-    data_dope = np.load(os.path.join(img_dir_trans_x, 'dope_xyzR.npz'))
-    xyz_dope_x = data_dope['xyz']
+    data_dope = np.load(os.path.join(img_dir_trans_x, 'dope_pR.npz'))
+    p_dope_x = data_dope['p']
     with open(os.path.join(img_dir_trans_x, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
-    xyz_true_x = data_true.xyz
+    p_true_x = data_true.p
 
     # load y data
-    data_dope = np.load(os.path.join(img_dir_trans_y, 'dope_xyzR.npz'))
-    xyz_dope_y = data_dope['xyz']
+    data_dope = np.load(os.path.join(img_dir_trans_y, 'dope_pR.npz'))
+    p_dope_y = data_dope['p']
     with open(os.path.join(img_dir_trans_y, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
-    xyz_true_y = data_true.xyz
+    p_true_y = data_true.p
 
     # load z data
-    data_dope = np.load(os.path.join(img_dir_trans_z, 'dope_xyzR.npz'))
-    xyz_dope_z = data_dope['xyz']
+    data_dope = np.load(os.path.join(img_dir_trans_z, 'dope_pR.npz'))
+    p_dope_z = data_dope['p']
     with open(os.path.join(img_dir_trans_z, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
-    xyz_true_z = data_true.xyz
+    p_true_z = data_true.p
 
     # load x rotation data
-    data_dope = np.load(os.path.join(img_dir_rot_x, 'dope_xyzR.npz'))
+    data_dope = np.load(os.path.join(img_dir_rot_x, 'dope_pR.npz'))
     R_dope_x = data_dope['R']
     with open(os.path.join(img_dir_rot_x, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
     q_true_x = data_true.quat
 
     # load y rotation data
-    data_dope = np.load(os.path.join(img_dir_rot_y, 'dope_xyzR.npz'))
+    data_dope = np.load(os.path.join(img_dir_rot_y, 'dope_pR.npz'))
     R_dope_y = data_dope['R']
     with open(os.path.join(img_dir_rot_y, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
     q_true_y = data_true.quat
 
     # load z rotation data
-    data_dope = np.load(os.path.join(img_dir_rot_z, 'dope_xyzR.npz'))
+    data_dope = np.load(os.path.join(img_dir_rot_z, 'dope_pR.npz'))
     R_dope_z = data_dope['R']
     with open(os.path.join(img_dir_rot_z, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
     q_true_z = data_true.quat
 
     # convert position to cm
-    xyz_dope_x *= conv.m_to_cm
-    xyz_dope_y *= conv.m_to_cm
-    xyz_dope_z *= conv.m_to_cm
-    xyz_true_x *= conv.m_to_cm
-    xyz_true_y *= conv.m_to_cm
-    xyz_true_z *= conv.m_to_cm
+    p_dope_x *= conv.m_to_cm
+    p_dope_y *= conv.m_to_cm
+    p_dope_z *= conv.m_to_cm
+    p_true_x *= conv.m_to_cm
+    p_true_y *= conv.m_to_cm
+    p_true_z *= conv.m_to_cm
 
     # convert rotation to tangent space representation
-    n_ims = xyz_dope_x.shape[1]
+    n_ims = p_dope_x.shape[1]
     s_x = np.full((3,n_ims), np.nan)
     s_y = np.full((3,n_ims), np.nan)
     s_z = np.full((3,n_ims), np.nan)
@@ -122,7 +122,7 @@ def plot_translation_and_rotation():
     # x
     ax1 = pp.subplot(6,1,1)
     pp.ylim(-1.0, 1.0)
-    pp.plot(xyz_true_x[0,:], xyz_dope_x[0,:] - xyz_true_x[0,:])
+    pp.plot(p_true_x[0,:], p_dope_x[0,:] - p_true_x[0,:])
     pp.xlabel('$x$ [cm]', fontsize=x_font_size)
     pp.ylabel('$\\hat{x} - x$ [cm]', fontsize=x_font_size)
     pp.xticks(fontsize=tick_font_size)
@@ -132,7 +132,7 @@ def plot_translation_and_rotation():
     # y
     ax2 = pp.subplot(6,1,2)
     pp.ylim(-35.0, 35.0)
-    pp.plot(xyz_true_y[1,:], xyz_dope_y[1,:] - xyz_true_y[1,:])
+    pp.plot(p_true_y[1,:], p_dope_y[1,:] - p_true_y[1,:])
     pp.xlabel('$y$ [cm]', fontsize=x_font_size)
     pp.ylabel('$\\hat{y} - y$ [cm]', fontsize=x_font_size)
     pp.xticks(fontsize=tick_font_size)
@@ -142,7 +142,7 @@ def plot_translation_and_rotation():
     # z
     ax3 = pp.subplot(6,1,3)
     pp.ylim(-1.0, 1.0)
-    pp.plot(xyz_true_z[2,:], xyz_dope_z[2,:] - xyz_true_z[2,:])
+    pp.plot(p_true_z[2,:], p_dope_z[2,:] - p_true_z[2,:])
     pp.xlabel('$z$ [cm]', fontsize=x_font_size)
     pp.ylabel('$\\hat{z} - z$ [cm]', fontsize=x_font_size)
     pp.xticks(fontsize=tick_font_size)
@@ -180,5 +180,5 @@ def plot_translation_and_rotation():
     ax6.axhline(0, color='gray', linewidth=0.5)
 
     # save plot
-    pp.savefig(os.path.join(dirs.paper_figs_dir, 'trans_rot_xyz.png'), dpi=300)
+    pp.savefig(os.path.join(dirs.paper_figs_dir, 'trans_rot.png'), dpi=300)
     pp.show()

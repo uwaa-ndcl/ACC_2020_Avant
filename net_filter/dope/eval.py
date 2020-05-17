@@ -77,7 +77,7 @@ def eval(img_files, yaml_file, ckpt_file, draw=True, save_boxed_image=False):
 
     models, pnp_solvers, config_detect, draw_colors = load(yaml_file, ckpt_file)
 
-    xyz_quat = np.full((7,n_ims), np.nan) # xyz and quaternion for all images
+    p_quat = np.full((7,n_ims), np.nan) # p and quaternion for all images
     for i in range(n_ims):
         #print('i',i)
 
@@ -112,8 +112,8 @@ def eval(img_files, yaml_file, ckpt_file, draw=True, save_boxed_image=False):
                 # save
                 loc = np.asarray(loc)
                 ori = np.asarray(ori)
-                xyz_quat[:3,i] = loc 
-                xyz_quat[3:,i] = ori 
+                p_quat[:3,i] = loc 
+                p_quat[3:,i] = ori 
 
                 # draw the cube
                 if None not in detected_object['projected_points']:
@@ -137,4 +137,4 @@ def eval(img_files, yaml_file, ckpt_file, draw=True, save_boxed_image=False):
             cv2.imshow('Open_cv_image', open_cv_image)
             cv2.waitKey(1)
 
-    return xyz_quat
+    return p_quat

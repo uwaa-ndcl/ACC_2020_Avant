@@ -12,7 +12,7 @@ blender_models_dir = os.path.join(main_dir, 'blender_models')
 # results
 results_dir =     os.path.join(main_dir, 'results/')
 simulation_dir =  os.path.join(results_dir, 'simulation/')
-trials_dir =      os.path.join(results_dir, 'simulation_trials/')
+monte_carlo_dir = os.path.join(results_dir, 'monte_carlo/')
 one_dim_dir =     os.path.join(results_dir, 'one_dim/')
 cov_bright_dir =  os.path.join(results_dir, 'cov_bright/')
 cov_dim_dir =     os.path.join(results_dir, 'cov_dim/')
