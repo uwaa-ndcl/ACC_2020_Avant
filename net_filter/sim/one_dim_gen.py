@@ -6,7 +6,6 @@ import transforms3d as t3d
 
 import net_filter.directories as dirs
 import net_filter.blender.render as br
-from net_filter.blender.render_properties import RenderProperties
 import net_filter.dope.eval as ev
 import net_filter.dope.dope_to_blender as db
 import net_filter.tools.image as ti
@@ -25,23 +24,9 @@ img_dir_rot_z = dirs.rot_z_dir
 # conversion    
 rotate_eps = 1e-6 # epsilon to add for generating angles -pi to pi
 
-# camera properties
-f = 50 # focal length
-pix_width = 640
-pix_height = 480
-sensor_width = 36 # in (mm)
-sensor_height = 36*(pix_height/pix_width)
-aov_w = 2*np.arctan((sensor_width/2)/f) # angle of view
-aov_h = 2*np.arctan((sensor_height/2)/f) 
-f_pix = pix_width*(f/sensor_width) # focal length in pixels
-
-# default camera
-#R_cam = t3d.euler.euler2mat(0, np.pi/2, 0, 'sxyz')
-R_cam = t3d.euler.euler2mat(np.pi/2, 0, 0, 'sxyz')
-q_cam = t3d.quaternions.mat2quat(R_cam)
-
 # upright can
 R_upright = t3d.euler.euler2mat(-np.pi/2, 0, -np.pi/2, 'sxyz')
+lighting_energy = 100.0
 
 
 def generate_images(xyz, R, img_dir):
@@ -58,16 +43,12 @@ def generate_images(xyz, R, img_dir):
 
     # render
     to_render_pkl = os.path.join(img_dir, 'to_render.pkl')
-    render_props = RenderProperties()
+    render_props = br.RenderProperties()
     render_props.n_renders = n_ims
     render_props.model_name = 'soup_can'
     render_props.xyz = xyz
     render_props.quat = q
-    render_props.pix_width = pix_width
-    render_props.pix_height = pix_height
-    render_props.alpha = False
-    render_props.compute_gramian = False
-    render_props.cam_quat = q_cam
+    render_props.lighting_energy = lighting_energy
     with open(to_render_pkl, 'wb') as output:
         pickle.dump(render_props, output, pickle.HIGHEST_PROTOCOL)
     br.blender_render(img_dir)
@@ -260,7 +241,7 @@ def rotate_z():
     pp.show()
 
 # translations (uncomment to run)
-#translate_x()
+translate_x()
 #translate_y()
 #translate_z()
 

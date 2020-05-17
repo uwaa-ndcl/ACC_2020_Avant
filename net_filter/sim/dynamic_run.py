@@ -30,7 +30,7 @@ om0 = np.array([5, 8, 4]) # paper
 xyz, R, v, om  = rb.integrate(t, xyz0, R0, xyzdot0, om0)
 
 # regenerate and re-evaluate images?
-regen = 0
+regen = 1
 if regen:
     # regenerate images
     dg.generate_images(n_ims, dt, xyz, R, v, om, img_dir)
@@ -62,20 +62,22 @@ xyz, R, v, om, xyz_hat, R_hat, v_hat, om_hat, P_ALL, xyz_meas, R_meas, xyz_err, 
 # totals
 xyz_filt_err_mean = np.mean(xyz_err)
 xyz_meas_err_mean = np.mean(xyz_err_meas)
+xyz_filt_err_norm = np.linalg.norm(xyz_err)
+xyz_meas_err_norm = np.linalg.norm(xyz_err_meas)
 
-R_meas_err_norm = np.linalg.norm(R_err_meas)
-R_filt_err_norm = np.linalg.norm(R_err)
 R_meas_err_mean = np.mean(R_err_meas)
 R_filt_err_mean = np.mean(R_err)
+R_meas_err_norm = np.linalg.norm(R_err_meas)
+R_filt_err_norm = np.linalg.norm(R_err)
 
 # print
 print('average xyz bias: ', np.mean(xyz - xyz_meas, axis=1))
-print('xyz measur error total: ',  xyz_meas_err_mean)
-print('xyz filter error total: ',  xyz_filt_err_mean)
-print('R measur error total: ', R_meas_err_norm)
-print('R filter error total: ', R_filt_err_norm)
-print('R measur error total: ', R_meas_err_mean)
-print('R filter error total: ', R_filt_err_mean)
+print('xyz measur error norm: ',  xyz_meas_err_norm)
+print('xyz filter error norm: ',  xyz_filt_err_norm)
+print('R measur error norm:   ', R_meas_err_norm)
+print('R filter error norm:   ', R_filt_err_norm)
+print('R measur error mean:   ', R_meas_err_mean)
+print('R filter error mean:   ', R_filt_err_mean)
 
 # plot
 fp.plot_errors()

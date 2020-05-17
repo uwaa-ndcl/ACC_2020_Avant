@@ -54,10 +54,6 @@ bpy.data.cameras[camera_name].sensor_fit = render_props.sensor_fit
 bpy.data.cameras[camera_name].sensor_width = 2*f*math.tan(render_props.angle_w/2)
 bpy.data.cameras[camera_name].sensor_height = 2*f*math.tan(render_props.angle_h/2)
 
-# if using backgrounds, make sure alpha is True
-if render_props.bkgd_image_list is not None:
-    render_props.alpha = True
-
 # scene properties
 bpy.data.scenes['Scene'].render.resolution_x = render_props.pix_width
 bpy.data.scenes['Scene'].render.resolution_y = render_props.pix_height
@@ -69,5 +65,5 @@ bpy.data.scenes['Scene'].render.engine = 'CYCLES'
 #bpy.data.scenes['Scene'].render.engine = 'BLENDER_EEVEE'
 bpy.data.scenes['Scene'].cycles.device = 'GPU'
 
-# compute gramian
+# render pose
 bf.render_pose(render_props)

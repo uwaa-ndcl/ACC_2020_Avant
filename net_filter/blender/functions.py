@@ -1,13 +1,11 @@
+'''
+these are functions to be called from within Blender using Blender's python
+interface
+'''
 import os
 import bpy
-import time
-import math
 import numpy as np
-import imageio
-import pickle
-import transforms3d as t3d
 
-import net_filter.directories as dirs
 import net_filter.tools.image as ti
 
 
@@ -27,15 +25,16 @@ def render_image(cam_ob, cam_pos, cam_quat, ob, ob_pos, ob_quat, image_file,
     ob.rotation_quaternion = ob_quat
     bpy.data.scenes['Scene'].render.filepath = image_file
 
+    # color of the "world"
     if world_RGB is not None:
         A = np.array([1.0]) # alpha for world RGBA lighting
         RGBA = np.concatenate((world_RGB, A))
         bpy.data.worlds['World'].node_tree.nodes['Background'].inputs[0].default_value = RGBA
 
+    # transparent background?
     if not alpha:
         bpy.data.scenes['Scene'].render.image_settings.color_mode = 'RGB'
         bpy.data.scenes['Scene'].render.film_transparent = False
-
     else:
         bpy.data.scenes['Scene'].render.image_settings.color_mode = 'RGBA'
         bpy.data.scenes['Scene'].render.film_transparent = True
@@ -84,16 +83,3 @@ def render_pose(render_props):
             image_file=image_file_i,
             alpha=render_props.alpha,
             world_RGB=world_RGB_i)
-
-        # if we have a list of background images, overlay render onto background
-        if render_props.bkgd_image_list is not None:
-            im_i = ti.load_im_np(image_file_i)
-            im_bkgd_i = ti.load_im_np(render_props.bkgd_image_list[i])
-            im_overlay = ti.overlay(im_i, im_bkgd_i)
-            ti.write_im_np(image_file_i, im_overlay)
-
-            # if we want to create a mask file
-            if render_props.mask_files is not None:
-                mask_2d = im_i[:,:,3] # alpha channel
-                mask_3d = np.repeat(mask_2d[:,:,np.newaxis], 3, 2)
-                ti.write_im_np(render_props.mask_files[i], mask_3d)
