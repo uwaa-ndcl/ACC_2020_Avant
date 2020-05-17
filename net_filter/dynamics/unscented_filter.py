@@ -4,7 +4,6 @@ from scipy import linalg
 import transforms3d as t3d
 
 import net_filter.tools.so3 as so3
-import net_filter.dynamics.angular_velocity as av
 import net_filter.dynamics.rigid_body as rb
 
 def f(xyz_prev, R_prev, xyzdot_prev, om_prev, w, u, dt):

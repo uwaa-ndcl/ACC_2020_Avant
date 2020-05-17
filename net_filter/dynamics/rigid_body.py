@@ -3,8 +3,6 @@ import scipy as sp
 from scipy import integrate, interpolate
 import transforms3d as t3d
 
-import net_filter.dynamics.angular_velocity as av
-
 # gravity
 g = 9.8
 
@@ -29,6 +27,36 @@ def cross(v):
                     [-v[1],  v[0],    0]])
 
     return mat
+
+
+def om_to_qdot(om, q):
+    '''
+    convert angular velocity om (expressed in body coordinates)
+    to time derivative of quaternion q_dot based on q
+    see eq. 3.104 (p. 110) Analytic Mechanics of Space Systems, 2nd ed.
+        note: omega is expressed in B frame (see eq. 3.106)
+    '''
+    om_mat = np.array([[    0, -om[0], -om[1], -om[2]],
+                       [om[0],      0,  om[2], -om[1]],
+                       [om[1], -om[2],      0,  om[0]],
+                       [om[2],  om[1], -om[0],      0]])
+    qdot = .5 * om_mat @ q
+
+    return qdot.ravel()
+
+
+def qdot_to_om(q, q_dot):
+    '''
+    convert time derivative of quaternion to angular velocity omega (in body
+    frame)
+    see 3.105 (p. 110) in Schaub & Junkins, and note that the inverse of the
+    4x4 matrix is equal to applying that matrix for to the inverse of beta
+    (this can be verfied numerically)
+    '''
+    om = 2 * t3d.quaternions.qmult(t3d.quaternions.qinverse(q), q_dot)
+    om = om[1:]
+
+    return om
 
 
 def newton_euler(t, v_om):
@@ -79,14 +107,14 @@ def integrate_kinematics(v, om, xyz0, q0, dt):
     # 1st order forward Euler integration
     xyz[:,0] = xyz0
     q[:,0] = q0
-    q_dot[:,0] = av.om_to_qdot(om[:,0], q[:,[0]]).ravel()
+    q_dot[:,0] = om_to_qdot(om[:,0], q[:,[0]]).ravel()
     for i in range(1, n_pts):
         xyz[:,i] = xyz[:,i-1] + dt*v[:,i-1]
         q[:,i] = q[:,i-1] + dt*q_dot[:,i-1]
         q[:,i] = q[:,i]/np.linalg.norm(q[:,i]) # normalize quaternion
 
         # time derivative of quaternion (remember omega is in B coordinates!)
-        q_dot[:,i] = av.om_to_qdot(om[:,i], q[:,[i]]).ravel()
+        q_dot[:,i] = om_to_qdot(om[:,i], q[:,[i]]).ravel()
     xyz_q = np.concatenate((xyz, q)) 
 
     return xyz, q, q_dot
@@ -104,7 +132,7 @@ def integrate(t, xyz0, R0, v0, om0):
 
     # convert rotation matrix to quaternions
     q0 = t3d.quaternions.mat2quat(R0)
-    qdot0 = av.om_to_qdot(om0, q0)
+    qdot0 = om_to_qdot(om0, q0)
     v_om0 = np.concatenate((v0, om0))
 
     # integration times
@@ -139,6 +167,6 @@ def integrate(t, xyz0, R0, v0, om0):
 
     for i in range(n_t):
         R[:,:,i] = t3d.quaternions.quat2mat(q[:,i])
-        om[:,i] = av.qdot_to_om(q[:,i], qdot[:,i]) 
+        om[:,i] = qdot_to_om(q[:,i], qdot[:,i]) 
 
     return xyz, R, v, om
