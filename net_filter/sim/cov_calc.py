@@ -5,7 +5,6 @@ import transforms3d as t3d
 
 import net_filter.directories as dirs
 import net_filter.tools.so3 as so3
-import net_filter.tools.print as tp
 import net_filter.tools.unit_conversion as conv
 
 #mode = 'dim'
@@ -46,7 +45,7 @@ p_normal = p_err - np.tile(p_mean[:,np.newaxis],n_ims) # subtract mean
 
 # rotations
 R = np.full((3,3,n_ims), np.nan)
-R_meas = np.full((3,3,n_ims), np.nan)
+#R_meas = np.full((3,3,n_ims), np.nan)
 s = np.full((3,n_ims), np.nan)
 
 # covariances
@@ -57,7 +56,7 @@ cov_state = np.full((6,6), 0.0)
 for i in range(n_ims):
     # orientation
     R[:,:,i] = t3d.quaternions.quat2mat(q[:,i])
-    R_meas[:,:,i] = t3d.quaternions.quat2mat(q_meas[:,i])
+    #R_meas[:,:,i] = t3d.quaternions.quat2mat(q_meas[:,i])
     S_i = so3.log(R[:,:,i].T @ R_meas[:,:,i])
     s[:,i] = so3.skew_elements(S_i)
 
@@ -88,19 +87,9 @@ cov_state *= 1/(n_ims - 1)
 state_mean = np.block([p_mean, s_mean])
 
 # print results
-#print('mean p')
-#print(p_mean)
-#print('covariance p')
-#print(cov_p)
-#print('covariance s')
-#print(cov_s)
 print('mean state')
 print(state_mean)
 print('covariance state')
 print(cov_state)
 print('covariance state diagonal elements')
 print(np.diag(cov_state))
-
-#tp.print_matrix_as_latex(cov_state, n_digs=3)
-#tp.print_matrix_as_latex(state_mean[:,np.newaxis], n_digs=2)
-#print(state_mean)

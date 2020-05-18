@@ -45,7 +45,7 @@ def om_to_qdot(om, q):
     return qdot.ravel()
 
 
-def qdot_to_om(q, q_dot):
+def qdot_to_om(q, qdot):
     '''
     convert time derivative of quaternion to angular velocity omega (in body
     frame)
@@ -53,74 +53,74 @@ def qdot_to_om(q, q_dot):
     4x4 matrix is equal to applying that matrix for to the inverse of beta
     (this can be verfied numerically)
     '''
-    om = 2 * t3d.quaternions.qmult(t3d.quaternions.qinverse(q), q_dot)
+    om = 2 * t3d.quaternions.qmult(t3d.quaternions.qinverse(q), qdot)
     om = om[1:]
 
     return om
 
 
-def newton_euler(t, v_om):
+def newton_euler(t, pdot_om):
     '''
     Newton-Euler equations for a rigid body
-    assumes velocity (v_A) is in inertial frame (A) coordinates,
+    assumes velocity (pdot_A) is in inertial frame (A) coordinates,
     and omega (om_B) is in body-frame (B) coordinates
     ref: eq. 4.16 (p. 167) in A Mathematical Introduction to Robotic
     Manipulation
     '''
 
-    v_A = v_om[:3]
-    om_B = v_om[3:]
+    pdot_A = pdot_om[:3]
+    om_B = pdot_om[3:]
     om_col_B = om_B[:,np.newaxis] # omega as column vector
     
     # translational dynamics: all expressed in inertial frame A
     F_A = np.array([[0, 0, -m*g]]).T # inertial frame force of gravity
-    v_dot_A = np.linalg.inv(m*np.eye(3)) @ F_A
+    pdot_dot_A = np.linalg.inv(m*np.eye(3)) @ F_A
 
     # rotational dynamics: all expressed in body frame B
     tau_B = np.array([[0, 0, 0]]).T     # inertial frame torque
-    om_dot_B = np.linalg.inv(J) @ (tau_B - cross(om_B) @ J @ om_col_B)
-    v_om_dot = np.concatenate((v_dot_A, om_dot_B)).ravel()
+    omdot_B = np.linalg.inv(J) @ (tau_B - cross(om_B) @ J @ om_col_B)
+    pdot_omdot = np.concatenate((pdot_dot_A, omdot_B)).ravel()
 
-    return v_om_dot
+    return pdot_omdot
 
 
-def integrate_kinematics(v, om, p0, q0, dt):
+def integrate_kinematics(pdot, om, p0, q0, dt):
     '''
-    forward Euler integration of angular velocities v and omega,
+    forward Euler integration of angular velocities pdot and omega,
     to x and quaternions
 
     inputs:
-        v_om: translational and angular velocities
-              v expressed in A frame, omega expressed in B frame
-              size (6, # of time points)
+        pdot, om: translational and angular velocities
+              pdot expressed in A frame, om expressed in B frame
+              size (3, # of time points)
         p_q0: initial p and quaternion, size (7)
         dt: timestep at which values are spaced
     '''
 
-    n_pts = v.shape[1]
+    n_pts = pdot.shape[1]
 
     # define arrays
     p = np.full((3, n_pts), np.nan)
     q = np.full((4, n_pts), np.nan)
-    q_dot = np.copy(q) # time derivative of quaternion
+    qdot = np.copy(q) # time derivative of quaternion
 
     # 1st order forward Euler integration
     p[:,0] = p0
     q[:,0] = q0
-    q_dot[:,0] = om_to_qdot(om[:,0], q[:,[0]]).ravel()
+    qdot[:,0] = om_to_qdot(om[:,0], q[:,[0]]).ravel()
     for i in range(1, n_pts):
-        p[:,i] = p[:,i-1] + dt*v[:,i-1]
-        q[:,i] = q[:,i-1] + dt*q_dot[:,i-1]
+        p[:,i] = p[:,i-1] + dt*pdot[:,i-1]
+        q[:,i] = q[:,i-1] + dt*qdot[:,i-1]
         q[:,i] = q[:,i]/np.linalg.norm(q[:,i]) # normalize quaternion
 
         # time derivative of quaternion (remember omega is in B coordinates!)
-        q_dot[:,i] = om_to_qdot(om[:,i], q[:,[i]]).ravel()
+        qdot[:,i] = om_to_qdot(om[:,i], q[:,[i]]).ravel()
     p_q = np.concatenate((p, q)) 
 
-    return p, q, q_dot
+    return p, q, qdot
 
 
-def integrate(t, p0, R0, v0, om0):
+def integrate(t, p0, R0, pdot0, om0):
     '''
     integrate Newton-Euler equations, then integrate kinematics (t=times)
     '''
@@ -133,34 +133,34 @@ def integrate(t, p0, R0, v0, om0):
     # convert rotation matrix to quaternions
     q0 = t3d.quaternions.mat2quat(R0)
     qdot0 = om_to_qdot(om0, q0)
-    v_om0 = np.concatenate((v0, om0))
+    pdot_om0 = np.concatenate((pdot0, om0))
 
     # integration times
     dt_int = .001
     t_int = np.arange(t0, tf+dt_int, dt_int) # make sure to include last point
     tf_int = t_int[-1]
 
-    # integrate newton-euler (state is v & om)
-    v_om0_col = v_om0[:,np.newaxis]
-    sol = sp.integrate.solve_ivp(newton_euler, (t0, tf_int), v_om0,
+    # integrate newton-euler (state is pdot & om)
+    pdot_om0_col = pdot_om0[:,np.newaxis]
+    sol = sp.integrate.solve_ivp(newton_euler, (t0, tf_int), pdot_om0,
                                  method='RK45', t_eval=t_int)
-    v_om_int = sol.y
-    v_int = v_om_int[:3,:]
-    om_int = v_om_int[3:,:]
+    pdot_om_int = sol.y
+    pdot_int = pdot_om_int[:3,:]
+    om_int = pdot_om_int[3:,:]
     
     # integrate kinematics
     p_int, q_int, qdot_int = integrate_kinematics(
-            v_int, om_int, p0, q0, dt_int) 
+            pdot_int, om_int, p0, q0, dt_int) 
 
     # interpolate t values using state x=(p,q,v,qdot)
-    x_int = np.concatenate((p_int, q_int, v_int, qdot_int), axis=0)
+    x_int = np.concatenate((p_int, q_int, pdot_int, qdot_int), axis=0)
     interp_fun = sp.interpolate.interp1d(t_int, x_int)
     x = interp_fun(t)
 
     # convert quaterions to rotation matrix
     p = x[:3,:]
     q = x[3:7,:]
-    v = x[7:10,:]
+    pdot = x[7:10,:]
     qdot = x[10:,:]
     R = np.full((3,3,n_t), np.nan)
     om = np.full((3,n_t), np.nan)
@@ -169,4 +169,4 @@ def integrate(t, p0, R0, v0, om0):
         R[:,:,i] = t3d.quaternions.quat2mat(q[:,i])
         om[:,i] = qdot_to_om(q[:,i], qdot[:,i]) 
 
-    return p, R, v, om
+    return p, R, pdot, om

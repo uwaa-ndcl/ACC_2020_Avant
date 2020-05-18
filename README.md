@@ -32,8 +32,8 @@ Run the following sequence of commands twice: once with `mode = dim` and once wi
 Run the following command:
 * `python net_filter/sim/dynamic_run.py`
 
-**randomized simulations (Table I)**: 
-Run the following commands:
+**monte carlo simulations (Table I)**: 
+Run the following commands (the first command took over an hour on my computer):
 * `python net_filter/sim/monte_carlo.py`
 * `python net_filter/sim/monte_carlo_results.py`
 

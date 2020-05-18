@@ -2,7 +2,6 @@ import os
 import pickle
 import numpy as np
 import transforms3d as t3d
-import matplotlib.pyplot as pp
 
 import net_filter.directories as dirs
 import net_filter.tools.so3 as so3
@@ -30,27 +29,6 @@ aov_w = 2*np.arctan((sensor_width/2)/f) # angle of view
 aov_h = 2*np.arctan((sensor_height/2)/f) 
 f_pix = pix_width*(f/sensor_width) # focal length in pixels
 
-def generate_images(p, q, world_RGB, light_energy):
-    '''
-    generate images
-    '''
-    n_ims = p.shape[1]
-
-    # render
-    to_render_pkl = os.path.join(img_dir, 'to_render.pkl')
-    render_props = br.RenderProperties()
-    render_props.n_renders = n_ims
-    render_props.model_name = 'soup_can'
-    render_props.pos = p
-    render_props.quat = q
-    render_props.world_RGB = world_RGB 
-    render_props.lighting_energy = light_energy
-    with open(to_render_pkl, 'wb') as output:
-        pickle.dump(render_props, output, pickle.HIGHEST_PROTOCOL)
-    br.blender_render(img_dir)
-
-
-###############################################################################
 # monte carlo
 np.random.seed(35)
 n_ims = 1000
@@ -70,26 +48,28 @@ for i in range(n_ims):
     z_max *= .8 # shrink it so the full object will be visible in the image
     x[i] = x_max*np.random.uniform(-1, 1)
     z[i] = z_max*np.random.uniform(-1, 1)
-    
-    # debug
-    #x[i] = x_max
-    #z[i] = z_max
-    #x[i] = 0
-    #z[i] = 0
 
 p = np.stack((x, y, z), axis=0)
 
 # rotations
 q = np.full((4, n_ims), np.nan) # to be filled
-for i in range(0, n_ims):
+for i in range(n_ims):
     R_i = so3.random_rotation_matrix() # random orientations
     q[:,i]  = t3d.quaternions.mat2quat(R_i)
 
-# generate
+# render
 world_RGB = np.full((3,n_ims), 0.0)
-generate_images(p, q, world_RGB, light_energy)
+to_render_pkl = os.path.join(img_dir, 'to_render.pkl')
+render_props = br.RenderProperties()
+render_props.n_renders = n_ims
+render_props.model_name = 'soup_can'
+render_props.pos = p
+render_props.quat = q
+render_props.world_RGB = world_RGB 
+render_props.lighting_energy = light_energy
+with open(to_render_pkl, 'wb') as output:
+    pickle.dump(render_props, output, pickle.HIGHEST_PROTOCOL)
+br.blender_render(img_dir)
 
 # predict
-p, q, p_est, q_est = db.get_predictions(img_dir, print_errors=False)
-print('bias: ', p[1,:] - p_est[1,:])
-print('average bias: ', np.mean(p[1,:] - p_est[1,:]))
+p, R, p_est, R_est = db.get_predictions(img_dir, print_errors=False)

@@ -9,7 +9,6 @@ from PIL import Image, ImageDraw
 import net_filter.directories as dirs
 import net_filter.tools.image as ti
 import net_filter.tools.unit_conversion as conv
-import net_filter.dope.eval as eval
 import net_filter.dope.draw as dd
 
 # model info
@@ -22,8 +21,7 @@ with open(to_render_pkl, 'rb') as input:
     render_props = pickle.load(input)
 pix_width = render_props.pix_width
 pix_height = render_props.pix_height
-# focal length in units of pixels
-f_p = (pix_width/2)/np.tan(render_props.angle_w/2)
+f_p = (pix_width/2)/np.tan(render_props.angle_w/2) # focal length, units of pix
 
 # load bounding box info
 with open(bbox_pkl, 'rb') as file:
@@ -91,15 +89,6 @@ def gen_boxes(p, q, clr, new_dir):
         open_cv_image = np.array(im)
         open_cv_image = cv2.cvtColor(open_cv_image, cv2.COLOR_RGB2BGR)
         cv2.imwrite(new_im_files[i], open_cv_image)
-
-'''
-name = 'original'
-p = render_props.pos
-q = render_props.quat
-clr = (0, 255, 0)
-new_dir = os.path.join(dirs.simulation_dir, 'original/')
-gen_boxes(p, q, clr, new_dir)
-'''
 
 # load data
 npz_file = os.path.join(dirs.simulation_dir, 'filter_results.npz')

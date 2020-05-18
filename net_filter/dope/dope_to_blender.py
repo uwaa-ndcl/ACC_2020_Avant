@@ -16,7 +16,8 @@ def dope_to_blender(p_dope, q_dope, R_cam):
         x: right, y: down, z: away from the camera
 
     Dope's reference coordinate frame for rotation is default (R = identity
-    matrix) when looking at the soup can upside down with the following coordinates
+    matrix) when looking at the soup can upside down with the following
+    coordinates:
         x: away from the camera, y: up, z: left
 
     this is a left-handed coordinate system, so we first convert to the
@@ -43,15 +44,12 @@ def dope_to_blender(p_dope, q_dope, R_cam):
     R_blend = np.full((3,3,n),np.nan)
 
     # convert position
-    #print('p_dope: ', p_dope)
     p_blend = np.copy(p_dope)
     p_blend[0,:] = -p_dope[2,:]
     p_blend[1,:] = -p_dope[1,:]
     p_blend[2,:] = -p_dope[0,:]
     p_blend *= dist_ratio
-    #print('p default blender: ', p_blend)
     p_blend = R_cam0_to_cam @ p_blend
-    #print('p rotated: ', p_blend)
 
     # loop over all images
     for i in range(n):
@@ -59,7 +57,7 @@ def dope_to_blender(p_dope, q_dope, R_cam):
         # default values
         if np.any(np.isnan(q_dope[:,i])) or np.any(np.isnan(p_dope[:,i])):
             print('image', i, 'could not be predicted')
-            R_blend = np.eye(3)
+            R_blend_i = np.eye(3)
             p_blend[:,i] = np.array([0,0,0])
 
         # the network predicted a pose, so convert it to our coordinate frame
@@ -87,7 +85,6 @@ def get_predictions(img_dir, print_errors=True):
         data = pickle.load(f)
     p = data.pos
     quat = data.quat
-    p_quat = np.block([[p], [quat]])
     R_cam = t3d.quaternions.quat2mat(data.cam_quat)
 
     # images in directory
@@ -115,6 +112,6 @@ def get_predictions(img_dir, print_errors=True):
     if print_errors:
         for i in range(n_ims):
             print(i, 'pos error: ', np.linalg.norm(p[:,i] - p_blend[:,i]))
-            print(i, 'ang error:  ', so3.geodesic_distance(R_blend[:,:,i], R[:,:,i]))
+            print(i, 'ang error: ', so3.geodesic_distance(R_blend[:,:,i], R[:,:,i]))
 
     return p, R, p_blend, R_blend

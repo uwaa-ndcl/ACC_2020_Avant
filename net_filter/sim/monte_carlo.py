@@ -11,7 +11,7 @@ import net_filter.sim.dynamic_filter as df
 import net_filter.sim.dynamic_filter_plots as fp
 
 # set up
-n_trials = 10
+n_trials = 100
 np.random.seed(82)
 
 p_err_mean = np.full(n_trials, np.nan)
@@ -45,7 +45,7 @@ for i in range(n_trials):
     p, R, pdot, om = rb.integrate(t, p0, R0, pdot0, om0)
 
     # regenerate and re-evaluate images?
-    regen = 0
+    regen = 1
     if regen:
         dg.generate_images(n_ims, dt, p, R, pdot, om, img_dir_i)
         p, R, p_est, R_est = db.get_predictions(img_dir_i)
@@ -85,5 +85,5 @@ for i in range(n_trials):
     R_err_mean_meas[i] = np.mean(R_err_meas)
 
 # save all results
-trials_npz = os.path.join(dirs.trials_dir, 'trials.npz')
+trials_npz = os.path.join(dirs.monte_carlo_dir, 'trials.npz')
 np.savez(trials_npz, p_err_mean=p_err_mean, p_err_mean_meas=p_err_mean_meas, R_err_mean=R_err_mean, R_err_mean_meas=R_err_mean_meas)
