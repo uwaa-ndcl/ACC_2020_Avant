@@ -1,6 +1,6 @@
 # Rigid Body Dynamics Estimation by Unscented Filtering Pose Estimation Neural Networks
 
-![Image of Chairs](images/fig4.png)
+![alt text](results/animation/animation.gif)
 
 This is the code for the paper
 
