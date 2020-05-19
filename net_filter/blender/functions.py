@@ -16,13 +16,17 @@ def render_image(cam_ob, cam_pos, cam_quat, ob, ob_pos, ob_quat, image_file,
     image
     '''
 
+    # camera properties
     cam_ob.location = cam_pos
     cam_ob.rotation_mode = 'QUATERNION'
     cam_ob.rotation_quaternion = cam_quat
 
+    # object properties
     ob.location = ob_pos
     ob.rotation_mode = 'QUATERNION'
     ob.rotation_quaternion = ob_quat
+
+    # save file
     bpy.data.scenes['Scene'].render.filepath = image_file
 
     # color of the "world"

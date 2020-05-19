@@ -29,7 +29,7 @@ aov_w = 2*np.arctan((sensor_width/2)/f) # angle of view
 aov_h = 2*np.arctan((sensor_height/2)/f) 
 f_pix = pix_width*(f/sensor_width) # focal length in pixels
 
-# monte carlo
+# randomization
 np.random.seed(35)
 n_ims = 1000
 

@@ -90,10 +90,10 @@ def integrate_kinematics(pdot, om, p0, q0, dt):
     to x and quaternions
 
     inputs:
-        pdot, om: translational and angular velocities
-              pdot expressed in A frame, om expressed in B frame
-              size (3, # of time points)
-        p_q0: initial p and quaternion, size (7)
+        pdot: trans velocity expressed in A frame, size (3, # time points)
+        om: angular velocity expressed in B frame, size (3, # time points)
+        p0: initial p, size (3)
+        q0: initial quaternion, size (4)
         dt: timestep at which values are spaced
     '''
 

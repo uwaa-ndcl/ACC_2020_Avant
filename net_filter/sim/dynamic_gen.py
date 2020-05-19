@@ -17,7 +17,7 @@ name = 'soup_can'
 RGB_color = .0*np.array([1.0, 1.0, 1.0])
 lighting_energy = 6.0
 
-def generate_images(n_t, dt, p, R, v, om, save_dir):
+def generate_images(n_t, dt, p, R, save_dir):
 
     # convert rotation matrices to quaternions
     q = np.full((4,n_t), np.nan)
@@ -30,8 +30,6 @@ def generate_images(n_t, dt, p, R, v, om, save_dir):
     render_props.model_name = name
     render_props.pos = p
     render_props.quat = q
-    #render_props.v = v # not used in rendering
-    #render_props.om = om # not used in rendering
     render_props.world_RGB = np.repeat(RGB_color[:,np.newaxis], n_t, axis=1)
     render_props.lighting_energy = lighting_energy
     render_props.dt = dt

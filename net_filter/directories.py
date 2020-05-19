@@ -17,8 +17,8 @@ one_dim_dir =     os.path.join(results_dir, 'one_dim/')
 cov_bright_dir =  os.path.join(results_dir, 'cov_bright/')
 cov_dim_dir =     os.path.join(results_dir, 'cov_dim/')
 snapshots_dir =   os.path.join(results_dir, 'snapshots/')
+animation_dir =   os.path.join(results_dir, 'animation/')
 dynamic_err_dir = os.path.join(simulation_dir, 'dynamic_err')
-animation_dir =   os.path.join(simulation_dir, 'animation/')
 
 # one dim simulations
 trans_x_dir =     os.path.join(one_dim_dir, 'trans_x/')

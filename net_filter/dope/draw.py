@@ -1,10 +1,10 @@
-def draw_line(draw_ob, point1, point2, lineColor, line_width):
+def draw_line(draw_ob, point1, point2, color, line_width):
     '''
     draw line on image
     '''
 
     if not point1 is None and point2 is not None:
-        draw_ob.line([point1, point2], fill=lineColor, width=line_width)
+        draw_ob.line([point1, point2], fill=color, width=line_width)
 
 
 def draw_dot(draw_ob, point, color, radius):

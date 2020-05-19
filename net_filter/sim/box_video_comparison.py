@@ -6,7 +6,6 @@ import matplotlib.pyplot as pp
 
 import net_filter.directories as dirs
 import net_filter.tools.image as ti
-import net_filter.sim.dynamic_filter_plots as fp
 
 clr_net = (221, 0, 255)
 clr_net = tuple(i/255 for i in clr_net) # put into range [0,1]
@@ -33,8 +32,8 @@ def plot(i):
     t = dat['t']
     p = dat['p']
     p_meas = dat['p_meas']
-    p_hat = dat['p_hat']
-    R_err = dat['R_err']
+    p_hat = dat['p_filt']
+    R_err = dat['R_err_filt']
     R_err_meas = dat['R_err_meas']
 
     # errors over time
@@ -53,41 +52,33 @@ def plot(i):
     # position
     sp1 = pp.subplot(2,1,1)
     #sp1.set_title('position error', fontsize=title_font_size)
-    pp.plot(t, p_err_meas, color=clr_net,
-            label='neural network (mean = %.1f)' % p_err_mean_meas)
-    pp.plot(t, p_err, color=clr_filt, linestyle='-', 
-            label='filter \hspace{48pt} (mean = %.1f)' % p_err_mean)
+    pp.plot(t, p_err_meas, color=clr_net)
+    pp.plot(t, p_err, color=clr_filt, linestyle='-')
     pp.axvline(x=t[i], color='k', zorder=0)
-    #pp.xlabel('time [s]', fontsize=xlabel_font_size)
-    #pp.ylabel('$\| \hat{\mathbf{p}} - \mathbf{p} \|$ [cm]', fontsize=xlabel_font_size)
-    pp.ylabel('pos error', fontsize=xlabel_font_size)
-    #pp.xticks(fontsize=tick_font_size)
-    #pp.yticks(fontsize=tick_font_size)
+    pp.ylabel('pos error [cm]', fontsize=xlabel_font_size)
     pp.xticks([])
-    pp.yticks([])
-    #pp.legend(fontsize=legend_font_size, loc='upper right')
-    #pp.axis('off')
-    #pp.spines['top'].set_visible(False)
-    #pp.box(False)
-
+    #pp.yticks([])
+    pp.grid(alpha=.1)
+    #pp.box(False) # no outline box
+    '''
+    # alpha of outline box
+    for spine_key, spine_val in sp1.axes.spines.items():
+        spine_val.set_alpha(.1)
+    '''
     # rotation
     sp2 = pp.subplot(2,1,2)
     #sp2.set_title('rotation error', fontsize=title_font_size)
-    pp.plot(t, R_err_meas, color=clr_net,
-            label='neural network (mean = %.1f)' % R_err_mean_meas)
-    pp.plot(t, R_err, color=clr_filt, linestyle='-', 
-            label='filter \\hspace{48pt} (mean = %.1f)' % R_err_mean)
+    pp.plot(t, R_err_meas, color=clr_net)
+    pp.plot(t, R_err, color=clr_filt, linestyle='-')
     pp.axvline(x=t[i], color='k', zorder=0)
-    #pp.xlabel('time [s]', fontsize=xlabel_font_size)
-    #pp.ylabel('$\\text{dist}(\\widehat{\\mathbf{R}}, \\mathbf{R})$ [\\textdegree]', fontsize=xlabel_font_size)
-    pp.ylabel('rot error', fontsize=xlabel_font_size)
-    #pp.xticks(fontsize=tick_font_size)
-    #pp.yticks(fontsize=tick_font_size)
+    pp.ylabel('rot error [\\textdegree]', fontsize=xlabel_font_size)
     pp.xticks([])
-    pp.yticks([])
-    #pp.legend(fontsize=legend_font_size, loc='upper right')
+    #pp.yticks([])
+    pp.grid(alpha=.1)
+    #pp.box(False) # no outline box
 
     pp.savefig(plot_ims[i], dpi=300)
+    pp.close()
 
 # directories
 ani_dir = dirs.animation_dir
@@ -111,12 +102,13 @@ filter_ims_labeled = [os.path.join(filter_labeled_dir, tail) for tail in tails]
 combined_ims = [os.path.join(combined_dir, tail) for tail in tails]
 combined_im_placeholder = os.path.join(combined_dir, '%06d.png')
 plot_ims = [os.path.join(plot_dir, tail) for tail in tails]
-gif_file = os.path.join(ani_dir, 'animation.gif')
 
 # debug: only do the first two images
-net_ims = net_ims[:2]
-filter_ims = filter_ims[:2]
-n_ims = len(net_ims)
+debug = 0
+if debug:
+    net_ims = net_ims[:2]
+    filter_ims = filter_ims[:2]
+    n_ims = len(net_ims)
 
 # geometry for convert command
 h, w = ti.load_im_np(net_ims[0]).shape[:2]
@@ -143,7 +135,7 @@ for i, f in enumerate(net_ims):
     # add text
     cmd = 'convert ' + net_ims_labeled[i] + ' -verbose ' + \
             '-gravity north  -font NimbusSans-Regular -pointsize 60 ' + \
-            "-fill '#000000' -annotate +0+20 'neural net' " + \
+            "-fill '#dd00ff' -annotate +0+20 'neural net' " + \
             net_ims_labeled[i]
     subprocess.run([cmd], shell=True)
 
@@ -159,7 +151,7 @@ for i, f in enumerate(filter_ims):
     # add text
     cmd = 'convert ' + filter_ims_labeled[i] + ' -verbose ' + \
             '-gravity north  -font NimbusSans-Regular -pointsize 60 ' + \
-            "-fill '#000000' -annotate +0+20 'neural net + filter' " + \
+            "-fill '#00ddff' -annotate +0+20 'neural net + filter' " + \
             filter_ims_labeled[i]
     subprocess.run([cmd], shell=True)
 
@@ -196,6 +188,17 @@ for i in range(n_ims):
 
 ###############################################################################
 # make gif
-cmd = 'ffmpeg -y -framerate 7 -i ' + combined_im_placeholder + ' ' + gif_file
+gif_file = os.path.join(ani_dir, 'animation.gif')
+palette_file = os.path.join(ani_dir, 'palette.png')
+
+# make a palette of colors in the png files
+# e.g.: ffmpeg -y -i im_%06d.png -vf palettegen palette.png
+cmd = 'ffmpeg -y -i ' + combined_im_placeholder + ' -vf palettegen ' + palette_file
+print(cmd)
+subprocess.run([cmd], shell=True)
+
+# make the gif
+# e.g.: ffmpeg -y -i im_%03d.png -i palette.png -filter_complex "fps=60,setpts=0.175*PTS,paletteuse" animation.gif
+cmd = 'ffmpeg -y -i ' + combined_im_placeholder + ' -i ' + palette_file + ' -filter_complex "fps=60,setpts=3.0*PTS,paletteuse" ' + gif_file
 print(cmd)
 subprocess.run([cmd], shell=True)

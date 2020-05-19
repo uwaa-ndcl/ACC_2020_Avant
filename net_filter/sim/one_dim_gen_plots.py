@@ -8,58 +8,51 @@ import net_filter.directories as dirs
 import net_filter.tools.so3 as so3
 import net_filter.tools.unit_conversion as conv
 
-# directories
-img_dir_trans_x = dirs.trans_x_dir
-img_dir_trans_y = dirs.trans_y_dir
-img_dir_trans_z = dirs.trans_z_dir
-img_dir_rot_x = dirs.rot_x_dir
-img_dir_rot_y = dirs.rot_y_dir
-img_dir_rot_z = dirs.rot_z_dir
-
 # upright can
 R_upright = t3d.euler.euler2mat(-np.pi/2, 0, -np.pi/2, 'sxyz')
 
 def plot_translation_and_rotation():
 
     # load x data
-    data_dope = np.load(os.path.join(img_dir_trans_x, 'dope_pR.npz'))
+    data_dope = np.load(os.path.join(dirs.trans_x_dir, 'dope_pR.npz'))
     p_dope_x = data_dope['p']
-    with open(os.path.join(img_dir_trans_x, 'to_render.pkl'), 'rb') as file:
+
+    with open(os.path.join(dirs.trans_x_dir, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
-    p_true_x = data_true.p
+    p_true_x = data_true.pos
 
     # load y data
-    data_dope = np.load(os.path.join(img_dir_trans_y, 'dope_pR.npz'))
+    data_dope = np.load(os.path.join(dirs.trans_y_dir, 'dope_pR.npz'))
     p_dope_y = data_dope['p']
-    with open(os.path.join(img_dir_trans_y, 'to_render.pkl'), 'rb') as file:
+    with open(os.path.join(dirs.trans_y_dir, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
-    p_true_y = data_true.p
+    p_true_y = data_true.pos
 
     # load z data
-    data_dope = np.load(os.path.join(img_dir_trans_z, 'dope_pR.npz'))
+    data_dope = np.load(os.path.join(dirs.trans_z_dir, 'dope_pR.npz'))
     p_dope_z = data_dope['p']
-    with open(os.path.join(img_dir_trans_z, 'to_render.pkl'), 'rb') as file:
+    with open(os.path.join(dirs.trans_z_dir, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
-    p_true_z = data_true.p
+    p_true_z = data_true.pos
 
     # load x rotation data
-    data_dope = np.load(os.path.join(img_dir_rot_x, 'dope_pR.npz'))
+    data_dope = np.load(os.path.join(dirs.rot_x_dir, 'dope_pR.npz'))
     R_dope_x = data_dope['R']
-    with open(os.path.join(img_dir_rot_x, 'to_render.pkl'), 'rb') as file:
+    with open(os.path.join(dirs.rot_x_dir, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
     q_true_x = data_true.quat
 
     # load y rotation data
-    data_dope = np.load(os.path.join(img_dir_rot_y, 'dope_pR.npz'))
+    data_dope = np.load(os.path.join(dirs.rot_y_dir, 'dope_pR.npz'))
     R_dope_y = data_dope['R']
-    with open(os.path.join(img_dir_rot_y, 'to_render.pkl'), 'rb') as file:
+    with open(os.path.join(dirs.rot_y_dir, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
     q_true_y = data_true.quat
 
     # load z rotation data
-    data_dope = np.load(os.path.join(img_dir_rot_z, 'dope_pR.npz'))
+    data_dope = np.load(os.path.join(dirs.rot_z_dir, 'dope_pR.npz'))
     R_dope_z = data_dope['R']
-    with open(os.path.join(img_dir_rot_z, 'to_render.pkl'), 'rb') as file:
+    with open(os.path.join(dirs.rot_z_dir, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
     q_true_z = data_true.quat
 
@@ -117,7 +110,8 @@ def plot_translation_and_rotation():
 
     # make figure
     fig = pp.figure(figsize=(7,10))
-    pp.subplots_adjust(left=.15, bottom=.10, right=.95, top=.95, wspace=None, hspace=0.9)
+    pp.subplots_adjust(left=.15, bottom=.10, right=.95, top=.95,
+                       wspace=None, hspace=0.9)
 
     # x
     ax1 = pp.subplot(6,1,1)

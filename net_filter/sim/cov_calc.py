@@ -45,29 +45,22 @@ p_normal = p_err - np.tile(p_mean[:,np.newaxis],n_ims) # subtract mean
 
 # rotations
 R = np.full((3,3,n_ims), np.nan)
-#R_meas = np.full((3,3,n_ims), np.nan)
 s = np.full((3,n_ims), np.nan)
-
-# covariances
-cov_s = np.full((3,3), 0.0)
-cov_p = np.full((3,3), 0.0)
-cov_state = np.full((6,6), 0.0)
-
 for i in range(n_ims):
     # orientation
     R[:,:,i] = t3d.quaternions.quat2mat(q[:,i])
-    #R_meas[:,:,i] = t3d.quaternions.quat2mat(q_meas[:,i])
     S_i = so3.log(R[:,:,i].T @ R_meas[:,:,i])
     s[:,i] = so3.skew_elements(S_i)
-
-# convert to deg
-s *= conv.rad_to_deg
+s *= conv.rad_to_deg # convert to deg
 
 # rotation mean
 s_mean = np.mean(s, axis=1)
 s_normal = s - np.tile(s_mean[:,np.newaxis], n_ims)
 
 # compute covariances
+cov_s = np.full((3,3), 0.0)
+cov_p = np.full((3,3), 0.0)
+cov_state = np.full((6,6), 0.0)
 for i in range(n_ims):
     cov_p += p_normal[:,[i]] @ p_normal[:,[i]].T
     cov_s += s[:,[i]] @ s[:,[i]].T # mean s is 0, so we don't need to subtract it

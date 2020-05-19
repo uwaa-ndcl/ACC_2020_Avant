@@ -20,20 +20,20 @@ Download the soup can checkpoint file (`soup_60.pth`) from the authors of Dope f
 ## code
 
 **1-d motions (Figure 3)**:
-Run the following command (note: there are 6 motions, after each of which a plot will appear, and you have to close the plot window to continue to the next motion.):
-* `python net_filter/sim/one_dim_gen.py` (generate the images using Blender and evaluate them using Dope, and plot the results)
+Run (note: there are 6 motions, after each of which a plot will appear, and you have to close the plot window to continue to the next motion):
+* `python net_filter/sim/one_dim_gen.py`
 
 **covariances (Figure 4)**:
 Run the following sequence of commands twice: once with `mode = dim` and once with `mode = bright` uncommented at the top of each (each sequence generates 1,000 images, and takes about 30 min on my computer):
-* `python net_filter/sim/cov_gen.py` (generate the images using Blender and evaluate them using Dope)
-* `python net_filter/sim/cov_calc.py` (calculate the covariances from the Dope estimates)
+* `python net_filter/sim/cov_gen.py`
+* `python net_filter/sim/cov_calc.py`
 
 **simulation (Figure 5 \& Figure 6)**:
-Run the following command:
+Run:
 * `python net_filter/sim/dynamic_run.py`
 
 **monte carlo simulations (Table I)**: 
-Run the following commands (the first command took over an hour on my computer):
+Run (the first command takes over an hour on my computer):
 * `python net_filter/sim/monte_carlo.py`
 * `python net_filter/sim/monte_carlo_results.py`
 
@@ -44,6 +44,10 @@ In this paper, we considered our object of interest to be the soup can from the 
 ## extra
 
 **make the GIF**
-Run the following commands (requires Imagemagick to be installed):
+Run (the second command requires `imagemagick` and `ffmpeg` to be installed):
 * `python net_filter/sim/box_gen.py`
 * `python net_filter/sim/box_video_comparison.py`
+
+**test the filter with faked measurements**
+Run:
+* python net_filter/tests/filter_test.py
