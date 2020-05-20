@@ -155,7 +155,6 @@ for i, f in enumerate(filter_ims):
             filter_ims_labeled[i]
     subprocess.run([cmd], shell=True)
 
-
 ###############################################################################
 # plots
 for i in range(n_ims):

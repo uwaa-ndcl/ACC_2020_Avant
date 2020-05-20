@@ -29,7 +29,7 @@ def h(p_prev, R_prev, u, v):
     return p_new, R_new
 
 
-def filter(f, h, p0_hat, R0_hat, pdot0_hat, om0_hat, COV_xx_0_hat, COV_ww, COV_vv, U, P_MEAS, R_MEAS, dt):
+def filter(p0_hat, R0_hat, pdot0_hat, om0_hat, COV_xx_0_hat, COV_ww, COV_vv, U, P_MEAS, R_MEAS, dt):
     '''
     Unscented Filter from Section 3.7 of Optimal Estimation of Dynamic Systems
     (2nd ed.) by Crassidis & Junkins

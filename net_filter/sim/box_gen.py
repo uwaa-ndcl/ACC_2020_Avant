@@ -3,7 +3,6 @@ import cv2
 import glob
 import pickle
 import numpy as np
-import transforms3d as t3d
 from PIL import Image, ImageDraw
 
 import net_filter.directories as dirs
@@ -40,7 +39,7 @@ box_def = np.array([[x_max, x_min, x_min, x_max, x_max, x_min, x_min, x_max],
                     [y_min, y_min, y_min, y_min, y_max, y_max, y_max, y_max],
                     [z_max, z_max, z_min, z_min, z_max, z_max, z_min, z_min]])
 
-def gen_boxes(p, q, clr, new_dir):
+def gen_boxes(p, R, clr, save_dir):
     '''
     overlay bounding boxes on rendered images
     '''
@@ -49,15 +48,14 @@ def gen_boxes(p, q, clr, new_dir):
     png_file = os.path.join(dirs.simulation_dir, '*.png')
     im_files = sorted(glob.glob(png_file))
     tails = [os.path.split(file)[1] for file in im_files]
-    new_im_files = [os.path.join(new_dir, tail) for tail in tails]
+    new_im_files = [os.path.join(save_dir, tail) for tail in tails]
 
     # loop over images
     n_renders = p.shape[1]
     for i in range(n_renders):
         # translate and rotate bounding box
         p_i = p[:,i]
-        q_i = q[:,i]
-        R_i = t3d.quaternions.quat2mat(q_i)
+        R_i = R[:,:,i]
         p_mat = np.repeat(p_i[:,np.newaxis], 8, axis=1)
         box_i = np.copy(box_def)
         box_i = R_i @ box_i
@@ -78,7 +76,6 @@ def gen_boxes(p, q, clr, new_dir):
         im_file_i = im_files[i]
         tail_i = os.path.split(im_file_i)[1]
         im_i = ti.load_im_np(im_file_i)
-        #im = Image.fromarray(im0)
         im = Image.fromarray(np.uint8(im_i*255))
         draw_ob = ImageDraw.Draw(im)
 
@@ -90,33 +87,23 @@ def gen_boxes(p, q, clr, new_dir):
         open_cv_image = cv2.cvtColor(open_cv_image, cv2.COLOR_RGB2BGR)
         cv2.imwrite(new_im_files[i], open_cv_image)
 
-# load data
+# load filter and measurement data
 npz_file = os.path.join(dirs.simulation_dir, 'filter_results.npz')
 data = np.load(npz_file)
 p = data['p']*conv.cm_to_m
 p_meas = data['p_meas']*conv.cm_to_m
-p_hat = data['p_hat']*conv.cm_to_m
+p_filt = data['p_filt']*conv.cm_to_m
 R = data['R']
 R_meas = data['R_meas']
-R_hat = data['R_hat']
-n_renders = p_meas.shape[1]
-
-# convert R to quat
-q = np.full((4, n_renders), np.nan)
-q_meas = np.full((4, n_renders), np.nan)
-q_hat = np.full((4, n_renders), np.nan)
-for i in range(n_renders):
-    q[:,i] = t3d.quaternions.mat2quat(R[:,:,i])
-    q_meas[:,i] = t3d.quaternions.mat2quat(R_meas[:,:,i])
-    q_hat[:,i] = t3d.quaternions.mat2quat(R_hat[:,:,i])
+R_filt = data['R_filt']
 
 # make boxed images for neural net estimates
 clr_net = (221, 0, 255)
-new_dir = os.path.join(dirs.animation_dir, 'net/')
-#gen_boxes(p, q, clr, new_dir) # sanity check: true values
-gen_boxes(p_meas, q_meas, clr_net, new_dir)
+net_dir = os.path.join(dirs.animation_dir, 'net/')
+#gen_boxes(p, R, clr, net_dir) # sanity check: true values
+gen_boxes(p_meas, R_meas, clr_net, net_dir)
 
 # make boxed images for filter estimates
 clr_filt = (0, 221, 255)
-new_dir = os.path.join(dirs.animation_dir, 'filter/')
-gen_boxes(p_hat, q_hat, clr_filt, new_dir)
+filt_dir = os.path.join(dirs.animation_dir, 'filter/')
+gen_boxes(p_filt, R_filt, clr_filt, filt_dir)

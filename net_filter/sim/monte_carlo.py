@@ -7,12 +7,14 @@ import net_filter.tools.so3 as so3
 import net_filter.blender.render as br
 import net_filter.dope.dope_to_blender as db
 import net_filter.dynamics.rigid_body as rb
+import net_filter.dynamics.unscented_filter as uf
 import net_filter.sim.dynamic_filter as df
 
 # set up
 n_trials = 100
 np.random.seed(82)
 
+# arrays to be filled
 p_err_meas_mean = np.full(n_trials, np.nan)
 p_err_filt_mean = np.full(n_trials, np.nan)
 R_err_meas_mean = np.full(n_trials, np.nan)
@@ -38,9 +40,8 @@ for i in range(n_trials):
     if not os.path.exists(img_dir_i):
         os.makedirs(img_dir_i)
 
-    R0 = R0_all[:,:,i]
-
     # rigid body dynamics
+    R0 = R0_all[:,:,i]
     p, R, pdot, om = rb.integrate(t, p0, R0, pdot0, om0)
 
     # regenerate and re-evaluate images?
@@ -66,7 +67,9 @@ for i in range(n_trials):
     COV_xx_0_hat = np.diag(cov_xx_0_hat)
 
     # run filter
-    p_filt, R_filt, pdot_filt, om_filt, COV_XX_ALL = df.apply_filter(t, dt, p0_hat, R0_hat, pdot0_hat, om0_hat, COV_xx_0_hat, p_meas, R_meas)
+    U = np.full((1, n_ims), 0.0) # there is no control in this problem
+    COV_ww, COV_vv = df.get_noise_covariances()
+    p_filt, R_filt, pdot_filt, om_filt, COV_XX_ALL = uf.filter(p0_hat, R0_hat, pdot0_hat, om0_hat, COV_xx_0_hat, COV_ww, COV_vv, U, p_meas, R_meas, dt)
 
     # convert outputs and calculate errors
     df.conversion_and_error(t, p, R, pdot, om, p_filt, R_filt, pdot_filt, om_filt, p_meas, R_meas, COV_XX_ALL, img_dir_i)

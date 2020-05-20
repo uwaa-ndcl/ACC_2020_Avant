@@ -8,12 +8,7 @@ import net_filter.tools.unit_conversion as conv
 import net_filter.tools.so3 as so3
 import net_filter.dynamics.unscented_filter as uf
 
-
-def apply_filter(t, dt, p0_hat, R0_hat, pdot0_hat, om0_hat, COV_xx_0_hat,
-                 p_meas, R_meas):
-
-    # get number of time points
-    n_t = len(t)
+def get_noise_covariances():
 
     # process noise (w) covariance
     cov_p = .05*np.array([1, 1, 1])
@@ -29,15 +24,7 @@ def apply_filter(t, dt, p0_hat, R0_hat, pdot0_hat, om0_hat, COV_xx_0_hat,
     cov_vv = np.block([cov_p, cov_R])
     COV_vv = np.diag(cov_vv)
 
-    # run filter
-    U = np.full((1, n_t), 0.0)
-
-    # run the unscented filter
-    p_hat, R_hat, pdot_hat, om_hat, COV_XX_ALL = uf.filter(
-            uf.f, uf.h, p0_hat, R0_hat, pdot0_hat, om0_hat,
-            COV_xx_0_hat, COV_ww, COV_vv, U, p_meas, R_meas, dt)
-
-    return p_hat, R_hat, pdot_hat, om_hat, COV_XX_ALL
+    return COV_ww, COV_vv
 
 
 def conversion_and_error(t, p, R, pdot, om, p_filt, R_filt, pdot_filt, om_filt,
@@ -88,6 +75,7 @@ def conversion_and_error(t, p, R, pdot, om, p_filt, R_filt, pdot_filt, om_filt,
              p=p, R=R, pdot=pdot, om=om,
              p_meas=p_meas, R_meas=R_meas,
              p_err_meas=p_err_meas, R_err_meas=R_err_meas,
-             p_filt=p_filt, R_filt=R_filt, pdot_filt=pdot_filt, om_filt=om_filt,
-             p_err_filt=p_err_filt, R_err_filt=R_err_filt, s_err_filt=s_err_filt,
-             COV_XX_ALL=COV_XX_ALL)
+             p_filt=p_filt, R_filt=R_filt,
+             pdot_filt=pdot_filt, om_filt=om_filt,
+             p_err_filt=p_err_filt, R_err_filt=R_err_filt,
+             s_err_filt=s_err_filt, COV_XX_ALL=COV_XX_ALL)
