@@ -1,3 +1,8 @@
+'''
+these are functions to work with PIL.ImageDraw.Draw objects
+(draw_ob in the functions)
+'''
+
 def draw_line(draw_ob, point1, point2, color, line_width):
     '''
     draw line on image

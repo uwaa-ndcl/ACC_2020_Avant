@@ -64,6 +64,7 @@ bpy.data.scenes['Scene'].cycles.film_transparent = True
 bpy.data.scenes['Scene'].render.engine = 'CYCLES'
 #bpy.data.scenes['Scene'].render.engine = 'BLENDER_EEVEE'
 bpy.data.scenes['Scene'].cycles.device = 'GPU'
+#bpy.context.scene.cycles.device = 'GPU'
 
 # render pose
 bf.render_pose(render_props)

@@ -16,6 +16,7 @@ R_upright = t3d.euler.euler2mat(-np.pi/2, 0, -np.pi/2, 'sxyz')
 n_ims = 30
 rot_eps = 1e-6 # epsilon to add for generating angles -pi to pi
 lighting_energy = 100.0
+world_RGB = np.array([.051, .051, .051])
 
 
 def gen_and_eval(mode):
@@ -70,28 +71,13 @@ def gen_and_eval(mode):
             p[:,i] = np.array([0, .8, 0])
         img_dir = dirs.rot_z_dir
 
-    # convert rotation matrices to quaternions
-    q = np.full((4,n_ims), np.nan)
-    for i in range(n_ims):
-        q[:,i] = t3d.quaternions.mat2quat(R[:,:,i])
-
-    # render
-    to_render_pkl = os.path.join(img_dir, 'to_render.pkl')
-    render_props = br.RenderProperties()
-    render_props.n_renders = n_ims
-    render_props.model_name = 'soup_can'
-    render_props.pos = p
-    render_props.quat = q
-    render_props.lighting_energy = lighting_energy
-    with open(to_render_pkl, 'wb') as output:
-        pickle.dump(render_props, output, pickle.HIGHEST_PROTOCOL)
-    br.blender_render(img_dir)
-
-    # predict
+    # render and predict
+    dt = 1 # this doesn't matter for this simulation
+    br.soup_gen(dt, p, R, img_dir, lighting_energy, world_RGB)
     p, R, p_est, R_est = db.get_predictions(img_dir, print_errors=False)
 
 # regenerate and re-evaluate images?
-regen = 0
+regen = 1
 if regen:
     # translations
     gen_and_eval('trans_x')

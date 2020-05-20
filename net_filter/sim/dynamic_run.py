@@ -5,7 +5,7 @@ import transforms3d as t3d
 import net_filter.directories as dirs
 import net_filter.dope.dope_to_blender as db
 import net_filter.dynamics.rigid_body as rb
-import net_filter.sim.dynamic_gen as dg
+import net_filter.blender.render as br
 import net_filter.sim.dynamic_filter as df
 import net_filter.sim.dynamic_plots as dp
 
@@ -29,11 +29,11 @@ om0 = np.array([5, 8, 4])
 p, R, pdot, om  = rb.integrate(t, p0, R0, pdot0, om0)
 
 # regenerate and re-evaluate images?
-regen = 0
+regen = 1
 if regen:
     # regenerate images
-    dg.generate_images(n_ims, dt, p, R, img_dir)
-    dg.generate_snapshots(n_ims, inds, p, R)
+    br.soup_gen(dt, p, R, img_dir)
+    br.soup_overlay(n_ims, inds, p, R)
 
     # re-evaluate images
     p, R, p_est, R_est = db.get_predictions(img_dir)

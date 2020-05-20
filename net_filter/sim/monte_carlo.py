@@ -4,9 +4,9 @@ import transforms3d as t3d
 
 import net_filter.directories as dirs
 import net_filter.tools.so3 as so3
+import net_filter.blender.render as br
 import net_filter.dope.dope_to_blender as db
 import net_filter.dynamics.rigid_body as rb
-import net_filter.sim.dynamic_gen as dg
 import net_filter.sim.dynamic_filter as df
 
 # set up
@@ -46,7 +46,7 @@ for i in range(n_trials):
     # regenerate and re-evaluate images?
     regen = 1
     if regen:
-        dg.generate_images(n_ims, dt, p, R, img_dir_i)
+        br.soup_gen(dt, p, R, img_dir_i)
         p, R, p_est, R_est = db.get_predictions(img_dir_i)
 
     # load dope pose estimates

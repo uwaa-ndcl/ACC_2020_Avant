@@ -21,7 +21,7 @@ def plot(i):
     pp.rc('text', usetex=True)
     pp.rc('text.latex',
           preamble=r'\usepackage{amsmath} \usepackage{amsfonts} \usepackage{textcomp}')
-    xlabel_font_size = 16
+    xlabel_font_size = 14
     legend_font_size = 13
     title_font_size = 18
     tick_font_size = 14
@@ -47,7 +47,7 @@ def plot(i):
     # setup
     pp.figure(figsize=[6.4,3.2]) # default figsize=[6.4,4.8]
     pp.subplots_adjust(left=None, bottom=None, right=None, top=None,
-                       wspace=None, hspace=.15)
+                       wspace=None, hspace=.10)
 
     # position
     sp1 = pp.subplot(2,1,1)
@@ -112,7 +112,7 @@ if debug:
 
 # geometry for convert command
 h, w = ti.load_im_np(net_ims[0]).shape[:2]
-w_space = 100
+w_space = 30
 h_space = 100
 h_upper_space = 80 # space above top of images (for title)
 size_geom = str(w + w_space) + 'x' + str(h + h_space)
@@ -166,7 +166,7 @@ for i in range(n_ims):
     subprocess.run([cmd], shell=True)
     
     # resize
-    cmd = 'convert ' + plot_ims[i] + ' -resize 1350x ' + plot_ims[i]
+    cmd = 'convert ' + plot_ims[i] + ' -resize 1300x ' + plot_ims[i]
     subprocess.run([cmd], shell=True)
 
 ###############################################################################

@@ -14,10 +14,10 @@ mode = 'bright'
 
 if mode == 'dim':
     img_dir = dirs.cov_dim_dir
-    light_energy = 6.0
+    lighting_energy = 6.0
 elif mode == 'bright':
     img_dir = dirs.cov_bright_dir
-    light_energy = 50.0
+    lighting_energy = 50.0
 
 # camera properties (to determine angle of view to create random poses)
 f = 50 # focal length
@@ -48,28 +48,16 @@ for i in range(n_ims):
     z_max *= .8 # shrink it so the full object will be visible in the image
     x[i] = x_max*np.random.uniform(-1, 1)
     z[i] = z_max*np.random.uniform(-1, 1)
-
 p = np.stack((x, y, z), axis=0)
 
 # rotations
-q = np.full((4, n_ims), np.nan) # to be filled
+R = np.full((3,3,n_ims), np.nan) # to be filled
 for i in range(n_ims):
-    R_i = so3.random_rotation_matrix() # random orientations
-    q[:,i]  = t3d.quaternions.mat2quat(R_i)
+    R[:,:,i] = so3.random_rotation_matrix() # random orientations
 
 # render
-world_RGB = np.full((3,n_ims), 0.0)
-to_render_pkl = os.path.join(img_dir, 'to_render.pkl')
-render_props = br.RenderProperties()
-render_props.n_renders = n_ims
-render_props.model_name = 'soup_can'
-render_props.pos = p
-render_props.quat = q
-render_props.world_RGB = world_RGB 
-render_props.lighting_energy = light_energy
-with open(to_render_pkl, 'wb') as output:
-    pickle.dump(render_props, output, pickle.HIGHEST_PROTOCOL)
-br.blender_render(img_dir)
+dt = 1 # this doesn't matter for this simulation
+br.soup_gen(dt, p, R, img_dir, lighting_energy=lighting_energy)
 
 # predict
 p, R, p_est, R_est = db.get_predictions(img_dir, print_errors=False)
