@@ -24,8 +24,8 @@ class RenderProperties:
         # object
         #self.ob = None # this will be set inside of Blender
         self.n_renders = 1
-        self.pos = np.array([[0],[0],[0]]) # size (3, n_renders)
-        self.quat = np.array([[1],[0],[0],[0]]) # size (4, n_renders)
+        self.pos = np.array([0,0,0])[:,np.newaxis] # size (3, n_renders)
+        self.rot_mat = np.eye(3)[:,:,np.newaxis] # size (3, 3, n_renders)
 
         # world lighting, size (3, n_renders)
         self.world_RGB = None  
@@ -34,12 +34,12 @@ class RenderProperties:
         self.lighting_energy = None
 
         # transparent background?
-        self.transparent = None # boolen list size (n_renders)
+        self.transparent = None # list of booleans, size (n_renders)
 
         # camera
         #self.cam_ob = None # this will be set inside of Blender
         self.cam_pos = [0, 0, 0]
-        self.cam_quat = t3d.euler.euler2quat(np.pi/2, 0, 0, axes='sxyz')
+        self.cam_rot_mat = t3d.euler.euler2mat(np.pi/2, 0, 0, axes='sxyz')
         self.pix_width = 640
         self.pix_height = 480
         self.sensor_fit = 'AUTO'
@@ -66,17 +66,13 @@ def blender_render(render_dir):
 def soup_gen(dt, p, R, save_dir,
                     lighting_energy=6.0, world_RGB=np.array([.0, .0, .0])):
 
-    # convert rotation matrices to quaternions
+    # render properties
     n_ims = p.shape[1]
-    q = np.full((4,n_ims), np.nan)
-    for i in range(n_ims):
-        q[:,i] = t3d.quaternions.mat2quat(R[:,:,i])
-
     to_render_pkl = os.path.join(save_dir, 'to_render.pkl')
     render_props = RenderProperties()
     render_props.n_renders = n_ims
     render_props.pos = p
-    render_props.quat = q
+    render_props.rot_mat = R
     render_props.world_RGB = np.repeat(world_RGB[:,np.newaxis], n_ims, axis=1)
     render_props.lighting_energy = lighting_energy
     render_props.dt = dt
@@ -88,13 +84,8 @@ def soup_gen(dt, p, R, save_dir,
 def soup_snapshots(p, R, inds,
                    lighting_energy=6.0, world_RGB=np.array([.0, .0, .0])):
 
-    # convert rotation matrices to quaternions
-    n_ims = p.shape[1]
-    q = np.full((4,n_ims), np.nan)
-    for i in range(n_ims):
-        q[:,i] = t3d.quaternions.mat2quat(R[:,:,i])
-
     # setup
+    n_ims = p.shape[1]
     save_dir = dirs.snapshots_dir
     to_render_pkl = os.path.join(save_dir, 'to_render.pkl')
     n_snapshot = 6 # number of snapshots for figure
@@ -111,7 +102,7 @@ def soup_snapshots(p, R, inds,
     render_props.n_renders = n_snapshot
     render_props.image_names = [png_name_snapshot % i for i in inds_snapshot]
     render_props.pos = p[:,inds_snapshot]
-    render_props.quat = q[:,inds_snapshot]
+    render_props.rot_mat = R[:,:,inds_snapshot]
     render_props.lighting_energy = lighting_energy
     render_props.world_RGB = np.repeat(world_RGB[:,np.newaxis], n_ims, axis=1)
     render_props.transparent = trans

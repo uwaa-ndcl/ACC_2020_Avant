@@ -34,7 +34,7 @@ Trevor Avant & Kristi A. Morgansen, *American Control Conference (ACC) 2020*
 
 **covariances (Figure 4)**:
 
-Run the following sequence of commands twice: once with `mode = dim` and once with `mode = bright` uncommented at the top of each (each sequence generates 1,000 images, and takes about 30 min on my computer):
+Run the following sequence of commands twice: once with `mode = dim` and once with `mode = bright` uncommented at the top of each python file (each sequence generates 1,000 images, and takes about 30 min on my computer):
 * `python net_filter/sim/cov_gen.py`
 * `python net_filter/sim/cov_calc.py`
 
@@ -43,7 +43,7 @@ Run the following sequence of commands twice: once with `mode = dim` and once wi
 
 **monte carlo simulations (Table I)**: 
 
-Run (the first command takes over an hour on my computer):
+Run these commands (the first command will generate 100 trajectories, and takes over an hour on my computer):
 * `python net_filter/sim/monte_carlo.py`
 * `python net_filter/sim/monte_carlo_results.py`
 
@@ -55,10 +55,12 @@ Run (the first command takes over an hour on my computer):
 
 **make the GIF**
 
-Note: the second command requires `imagemagick` and `ffmpeg` to be installed:
+Run the following commands (note: the second command requires `imagemagick` and `ffmpeg` to be installed):
 * `python net_filter/sim/box_gen.py`
 * `python net_filter/sim/box_video_comparison.py`
 
+**apply DOPE to all images in a folder**
+* `python net_filter/tests/eval_test.py`
 
 ## notes
 * In this project, we used the DOPE neural network. Code for DOPE is available on the [DOPE Github page](https://github.com/NVlabs/Deep_Object_Pose), but that code is designed to be used through a ROS interface. We needed to use DOPE purely through Python, so we based our code off of [this Github repository](https://github.com/Abdul-Mukit/dope_exp). This DOPE-related code in our project is found in the `net_filter/dope/` directory.

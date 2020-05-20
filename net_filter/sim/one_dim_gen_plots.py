@@ -40,21 +40,21 @@ def plot_translation_and_rotation():
     R_dope_x = data_dope['R']
     with open(os.path.join(dirs.rot_x_dir, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
-    q_true_x = data_true.quat
+    R_true_x = data_true.rot_mat
 
     # load y rotation data
     data_dope = np.load(os.path.join(dirs.rot_y_dir, 'dope_pR.npz'))
     R_dope_y = data_dope['R']
     with open(os.path.join(dirs.rot_y_dir, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
-    q_true_y = data_true.quat
+    R_true_y = data_true.rot_mat
 
     # load z rotation data
     data_dope = np.load(os.path.join(dirs.rot_z_dir, 'dope_pR.npz'))
     R_dope_z = data_dope['R']
     with open(os.path.join(dirs.rot_z_dir, 'to_render.pkl'), 'rb') as file:
         data_true = pickle.load(file)
-    q_true_z = data_true.quat
+    R_true_z = data_true.rot_mat
 
     # convert position to cm
     p_dope_x *= conv.m_to_cm
@@ -74,21 +74,21 @@ def plot_translation_and_rotation():
     s_offset_z = np.full((3,n_ims), np.nan)
     for i in range(n_ims):
         # x
-        R_i = t3d.quaternions.quat2mat(q_true_x[:,i])
+        R_i = R_true_x[:,:,i]
         R_est_i = R_dope_x[:,:,i]
         R_offset_i = R_i.T @ R_est_i
         s_x[:,i] = so3.skew_elements(so3.log(R_i @ R_upright.T))
         s_offset_x[:,i] = so3.skew_elements(so3.log(R_offset_i))
 
         # y
-        R_i = t3d.quaternions.quat2mat(q_true_y[:,i])
+        R_i = R_true_y[:,:,i]
         R_est_i = R_dope_y[:,:,i]
         R_offset_i = R_i.T @ R_est_i
         s_y[:,i] = so3.skew_elements(so3.log(R_i @ R_upright.T))
         s_offset_y[:,i] = so3.skew_elements(so3.log(R_offset_i))
 
         # z
-        R_i = t3d.quaternions.quat2mat(q_true_z[:,i])
+        R_i = R_true_z[:,:,i]
         R_est_i = R_dope_z[:,:,i]
         R_offset_i = R_i.T @ R_est_i
         s_z[:,i] = so3.skew_elements(so3.log(R_i @ R_upright.T))

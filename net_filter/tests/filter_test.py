@@ -7,8 +7,8 @@ import net_filter.directories as dirs
 import net_filter.tools.so3 as so3
 import net_filter.dope.dope_to_blender as db
 import net_filter.dynamics.rigid_body as rb
-import net_filter.sim.dynamic_gen as dg
-import net_filter.sim.dynamic_filter as df
+import net_filter.dynamics.unscented_filter as uf
+import net_filter.sim.dynamic_functions as df
 
 # times
 n_ims = 30
@@ -46,10 +46,12 @@ cov_xx_0_hat = np.ones(12)
 COV_xx_0_hat = np.diag(cov_xx_0_hat)
 
 # run filter
-p_hat, R_hat, pdot_hat, om_hat, COV_XX_ALL = df.apply_filter(t, dt, p0_hat, R0_hat, pdot0_hat, om0_hat, COV_xx_0_hat, p_meas, R_meas)
+U = np.full((1, n_ims), 0.0) # there is no control in this problem
+COV_ww, COV_vv = df.get_noise_covariances()
+p_filt, R_filt, pdot_filt, om_filt, COV_XX_ALL = uf.filter(p0_hat, R0_hat, pdot0_hat, om0_hat, COV_xx_0_hat, COV_ww, COV_vv, U, p_meas, R_meas, dt)
 
 # convert outputs and calculate errors
-df.conversion_and_error(t, p, R, pdot, om, p_hat, R_hat, pdot_hat, om_hat, p_meas, R_meas, COV_XX_ALL, save_dir)
+df.conversion_and_error(t, p, R, pdot, om, p_filt, R_filt, pdot_filt, om_filt, p_meas, R_meas, COV_XX_ALL, save_dir)
 filter_results_npz = os.path.join(save_dir, 'filter_results.npz')
 data = np.load(filter_results_npz)
 p = data['p']

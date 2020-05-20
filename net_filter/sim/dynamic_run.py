@@ -7,7 +7,7 @@ import net_filter.dope.dope_to_blender as db
 import net_filter.dynamics.rigid_body as rb
 import net_filter.dynamics.unscented_filter as uf
 import net_filter.blender.render as br
-import net_filter.sim.dynamic_filter as df
+import net_filter.sim.dynamic_functions as df
 import net_filter.sim.dynamic_plots as dp
 
 # image directory

@@ -34,7 +34,6 @@ draw_colors: {
 }
 
 # Camera intrinsics 
-#(Logitech C920)
 # camera properties
 # NOTE: The my_config.yaml file has 6 parameters which correspond as follows to
 # the variables below. If these variables are to be changed, the yaml file must

@@ -12,6 +12,7 @@ import sys
 import math
 import pickle
 import numpy as np
+import transforms3d as t3d
 
 import net_filter.directories as dirs
 
@@ -44,7 +45,7 @@ cam_ob = bpy.data.objects.new(camera_name, cam)  # create a new camera object
 bpy.context.scene.camera = cam_ob  # set the active camera to be the new camera
 cam_ob.location = render_props.cam_pos
 cam_ob.rotation_mode = 'QUATERNION'
-cam_ob.rotation_quaternion = render_props.cam_quat
+cam_ob.rotation_quaternion = t3d.quaternions.mat2quat(render_props.cam_rot_mat)
 
 # lens and sensor
 f = 50 # focal length, Blender default
@@ -91,7 +92,8 @@ for i in range(render_props.n_renders):
 
     # object location and rotation
     ob.location = render_props.pos[:,i]
-    ob.rotation_quaternion = render_props.quat[:,i]
+    ob_quat = t3d.quaternions.mat2quat(render_props.rot_mat[:,:,i])
+    ob.rotation_quaternion = ob_quat 
 
     # set the file to save to
     if render_props.image_names is None:

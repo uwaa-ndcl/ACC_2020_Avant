@@ -20,7 +20,7 @@ data_pkl = os.path.join(img_dir, 'to_render.pkl')
 with open(data_pkl, 'rb') as f:
     data = pickle.load(f)
 p = data.pos
-q = data.quat
+R = data.rot_mat
 n_ims = p.shape[1]
 
 # load dope pose estimates
@@ -33,22 +33,15 @@ R_meas = data['R']
 p *= conv.m_to_cm
 p_meas *= conv.m_to_cm
 
-# convert quaternions to rotation matrices
-R = np.full((3,3,n_ims),np.nan)
-for i in range(n_ims):
-    R[:,:,i] = t3d.quaternions.quat2mat(q[:,i])
-
 # translations
 p_err = p_meas - p
 p_mean = np.mean(p_err, axis=1)
 p_normal = p_err - np.tile(p_mean[:,np.newaxis],n_ims) # subtract mean
 
 # rotations
-R = np.full((3,3,n_ims), np.nan)
 s = np.full((3,n_ims), np.nan)
 for i in range(n_ims):
     # orientation
-    R[:,:,i] = t3d.quaternions.quat2mat(q[:,i])
     S_i = so3.log(R[:,:,i].T @ R_meas[:,:,i])
     s[:,i] = so3.skew_elements(S_i)
 s *= conv.rad_to_deg # convert to deg
@@ -82,7 +75,11 @@ state_mean = np.block([p_mean, s_mean])
 # print results
 print('mean state')
 print(state_mean)
-print('covariance state')
-print(cov_state)
+print('mean state (round to 2 decimals)')
+print(np.around(state_mean, 2))
+#print('covariance state')
+#print(cov_state)
 print('covariance state diagonal elements')
 print(np.diag(cov_state))
+print('covariance state diagonal elements (round to int)')
+print(np.rint(np.diag(cov_state)))

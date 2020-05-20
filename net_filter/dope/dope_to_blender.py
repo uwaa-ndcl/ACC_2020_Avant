@@ -84,8 +84,8 @@ def get_predictions(img_dir, print_errors=True):
     with open(data_pkl, 'rb') as f:
         data = pickle.load(f)
     p = data.pos
-    quat = data.quat
-    R_cam = t3d.quaternions.quat2mat(data.cam_quat)
+    R = data.rot_mat
+    R_cam = data.cam_rot_mat
 
     # images in directory
     png_files = os.path.join(img_dir, '*.png')
@@ -102,11 +102,6 @@ def get_predictions(img_dir, print_errors=True):
     p_blend, R_blend = dope_to_blender(p_dope, q_dope, R_cam)
     save_npz = os.path.join(img_dir, 'dope_pR.npz')
     np.savez(save_npz, p=p_blend, R=R_blend)
-
-    # convert quaternions to rotation matrices
-    R = np.full((3,3,n_ims), np.nan)
-    for i in range(n_ims):
-        R[:,:,i] = t3d.quaternions.quat2mat(quat[:,i])
 
     # print errors
     if print_errors:

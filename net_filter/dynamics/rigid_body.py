@@ -1,7 +1,6 @@
 import numpy as np
 import scipy as sp
 from scipy import integrate, interpolate
-import transforms3d as t3d
 import net_filter.tools.so3 as so3
 
 # gravity
@@ -44,82 +43,59 @@ def newton_euler(t, pdot_om):
     return pdot_omdot
 
 
-def integrate_kinematics(pdot, om, p0, R0, dt):
+def integrate(t_out, p0, R0, pdot0, om0):
     '''
-    forward Euler integration of angular velocities pdot and omega,
-    to p and R
-
-    inputs:
-        pdot: trans velocity expressed in A frame, size (3, # time points)
-        om: angular velocity expressed in B frame, size (3, # time points)
-        p0: initial p, size (3)
-        R0: initial rotation matrix, size (3,3)
-        dt: timestep at which values are spaced
-    '''
-
-    n_pts = pdot.shape[1]
-
-    # define arrays
-    p = np.full((3,n_pts), np.nan)
-    R = np.full((3,3,n_pts), np.nan)
-
-    # 1st order forward Euler integration
-    p[:,0] = p0
-    R[:,:,0] = R0
-    for i in range(1, n_pts):
-        p[:,i] = p[:,i-1] + dt*pdot[:,i-1]
-        R[:,:,i] = R[:,:,i-1] @ so3.exp(so3.cross(dt*om[:,i-1]))
-
-    return p, R
-
-
-def integrate(t, p0, R0, pdot0, om0):
-    '''
-    integrate Newton-Euler equations, then integrate kinematics (t=times)
+    integrate Newton-Euler equations, then integrate kinematics
+    t_out = times at which to return states
     '''
 
     # setup
-    t0 = t[0]
+    t0 = t_out[0]
+    tf_out = t_out[-1]
+    n_t_out = t_out.size
+
+    # integration times
+    dt = .001
+    t = np.arange(t0, tf_out+dt, dt) # tf+dt makes sure tf is included
     tf = t[-1]
     n_t = t.size
 
-    # integration times
-    dt_int = .001
-    t_int = np.arange(t0, tf+dt_int, dt_int) # make sure to include last point
-    tf_int = t_int[-1]
-    n_int = t_int.size
-
     # integrate newton-euler (state is pdot & om)
     pdot_om0 = np.concatenate((pdot0, om0))
-    pdot_om0_col = pdot_om0[:,np.newaxis]
-    sol = sp.integrate.solve_ivp(newton_euler, (t0, tf_int), pdot_om0,
-                                 method='RK45', t_eval=t_int)
-    pdot_om_int = sol.y
-    pdot_int = pdot_om_int[:3,:]
-    om_int = pdot_om_int[3:,:]
-    
-    # integrate kinematics
-    p_int, R_int = integrate_kinematics(pdot_int, om_int, p0, R0, dt_int)
+    sol = sp.integrate.solve_ivp(newton_euler, (t0, tf), pdot_om0,
+                                 method='RK45', t_eval=t)
+    pdot_om = sol.y
+    pdot = pdot_om[:3,:]
+    om = pdot_om[3:,:]
 
-    # get tangent space representation of R_int so we can interpolate
-    s_int = np.full((3,n_int), np.nan)
-    for i in range(n_int):
-        s_int[:,i] = so3.skew_elements(so3.log(R_int[:,:,i]))
+    # 1st-order forward Euler integration of kinematics to get p and R
+    p = np.full((3,n_t), np.nan)
+    R = np.full((3,3,n_t), np.nan)
+    p[:,0] = p0
+    R[:,:,0] = R0
+    for i in range(1, n_t):
+        p[:,i] = p[:,i-1] + dt*pdot[:,i-1]
+        R[:,:,i] = R[:,:,i-1] @ so3.exp(so3.cross(dt*om[:,i-1]))
+
+    # get tangent space representation of R so we can interpolate
+    s = np.full((3,n_t), np.nan)
+    for i in range(n_t):
+        s[:,i] = so3.skew_elements(so3.log(R[:,:,i]))
 
     # interpolate t values using state x=(p,s,v,om)
-    x_int = np.concatenate((p_int, s_int, pdot_int, om_int), axis=0)
-    interp_fun = sp.interpolate.interp1d(t_int, x_int)
-    x = interp_fun(t)
+    x = np.concatenate((p, s, pdot, om), axis=0)
+    interp_fun = sp.interpolate.interp1d(t, x)
+    x_out = interp_fun(t_out)
 
     # get x values
-    p = x[:3,:]
-    s = x[3:6,:]
-    pdot = x[6:9,:]
-    om = x[9:,:]
+    p_out = x_out[:3,:]
+    s_out = x_out[3:6,:]
+    pdot_out = x_out[6:9,:]
+    om_out = x_out[9:,:]
 
     # convert tangent space s back into rotations
-    R = np.full((3,3,n_t), np.nan)
-    for i in range(n_t):
-        R[:,:,i] = so3.exp(so3.cross(s[:,i]))
+    R_out = np.full((3,3,n_t_out), np.nan)
+    for i in range(n_t_out):
+        R_out[:,:,i] = so3.exp(so3.cross(s_out[:,i]))
 
-    return p, R, pdot, om
+    return p_out, R_out, pdot_out, om_out

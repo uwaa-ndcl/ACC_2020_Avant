@@ -112,30 +112,29 @@ if debug:
 
 # geometry for convert command
 h, w = ti.load_im_np(net_ims[0]).shape[:2]
-w_space = 30
+w_space = 20
 h_space = 100
 h_upper_space = 80 # space above top of images (for title)
 size_geom = str(w + w_space) + 'x' + str(h + h_space)
 
 # geometry for -extent option in convert commands
-# e.g. 740x580-16-80 
-geom_1 = size_geom + '-' + str(w_space//6) + '-' + str(h_upper_space)
-geom_2 = size_geom + '+' + str(w_space//6) + '-' + str(h_upper_space)
-
+# e.g. 740x580-0-80 
+geom_net = size_geom + '-0-' + str(h_upper_space)
+geom_filt = size_geom + '-0-' + str(h_upper_space)
 
 ###############################################################################
 # label neural net images
 for i, f in enumerate(net_ims):
     # add border
     cmd = 'convert ' + f + ' -verbose ' + \
-            "-gravity north -background '#ffffff' -extent " + geom_1 + ' ' + \
-            net_ims_labeled[i]
+            "-gravity north -background '#ffffff' " + \
+            '-extent ' + geom_net + ' ' +  net_ims_labeled[i]
     subprocess.run([cmd], shell=True)
 
     # add text
     cmd = 'convert ' + net_ims_labeled[i] + ' -verbose ' + \
-            '-gravity north  -font NimbusSans-Regular -pointsize 60 ' + \
-            "-fill '#dd00ff' -annotate +0+20 'neural net' " + \
+           '-gravity north  -font NimbusSans-Regular -pointsize 60 ' + \
+           "-fill '#dd00ff' -annotate +0+20 'neural net' " + \
             net_ims_labeled[i]
     subprocess.run([cmd], shell=True)
 
@@ -144,8 +143,8 @@ for i, f in enumerate(net_ims):
 for i, f in enumerate(filter_ims): 
     # add border
     cmd = 'convert ' + f + ' -verbose ' + \
-            "-gravity north -background '#ffffff' -extent " + geom_2 + ' ' + \
-            filter_ims_labeled[i]
+           "-gravity north -background '#ffffff' " + \
+           '-extent ' + geom_filt + ' ' + filter_ims_labeled[i]
     subprocess.run([cmd], shell=True)
 
     # add text
