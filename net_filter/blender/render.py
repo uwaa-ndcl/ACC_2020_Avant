@@ -86,7 +86,8 @@ def soup_gen(dt, p, R, save_dir,
     blender_render(save_dir)
 
 
-def soup_overlay(n_ims, inds, p, R):
+def soup_snapshots(p, R, inds,
+                   lighting_energy=6.0, world_RGB=np.array([.0, .0, .0])):
 
     # convert rotation matrices to quaternions
     n_ims = p.shape[1]
