@@ -12,7 +12,7 @@ class RenderProperties:
 
     def __init__(self):
         # name of .blend file
-        self.model_name = None
+        self.model_name = 'soup_can'
 
         # list of names of images, if none then images will be named
         # 000000.png, 000001.png, ...
@@ -22,7 +22,7 @@ class RenderProperties:
         self.save_dir = None # this will be filled later
 
         # object
-        self.ob = None # this will be set inside of Blender
+        #self.ob = None # this will be set inside of Blender
         self.n_renders = 1
         self.pos = np.array([[0],[0],[0]]) # size (3, n_renders)
         self.quat = np.array([[1],[0],[0],[0]]) # size (4, n_renders)
@@ -34,10 +34,10 @@ class RenderProperties:
         self.lighting_energy = None
 
         # transparent background?
-        self.alpha = False 
+        self.transparent = None # boolen list size (n_renders)
 
         # camera
-        self.cam_ob = None # this will be set inside of Blender
+        #self.cam_ob = None # this will be set inside of Blender
         self.cam_pos = [0, 0, 0]
         self.cam_quat = t3d.euler.euler2quat(np.pi/2, 0, 0, axes='sxyz')
         self.pix_width = 640
@@ -75,7 +75,6 @@ def soup_gen(dt, p, R, save_dir,
     to_render_pkl = os.path.join(save_dir, 'to_render.pkl')
     render_props = RenderProperties()
     render_props.n_renders = n_ims
-    render_props.model_name = 'soup_can'
     render_props.pos = p
     render_props.quat = q
     render_props.world_RGB = np.repeat(world_RGB[:,np.newaxis], n_ims, axis=1)
@@ -105,26 +104,20 @@ def soup_snapshots(p, R, inds,
         inds_snapshot = inds_snapshot[:-1]
     png_name_snapshot = 'snapshot_%06d'
 
-    # loop over snapshots
-    for i in range(n_snapshot):
-        ind_i = inds_snapshot[i]
-        render_props = RenderProperties()
-        render_props.model_name = 'soup_can'
-        render_props.image_names = [png_name_snapshot % ind_i]
-        render_props.pos = p[:,[ind_i]]
-        render_props.quat = q[:,[ind_i]]
-        render_props.world_RGB = np.repeat(RGB_color[:,np.newaxis], n_ims, axis=1)
-        render_props.lighting_energy = lighting_energy
-
-        # only make last snapshot have a background
-        if i < n_snapshot-1:
-            render_props.alpha = True
-        else:
-            render_props.alpha = False
-
-        with open(to_render_pkl, 'wb') as output:
-            pickle.dump(render_props, output, pickle.HIGHEST_PROTOCOL)
-        blender_render(save_dir)
+    # render snapshots
+    trans = [True]*n_snapshot
+    trans[-1] = False # only make last snapshot have a background
+    render_props = RenderProperties()
+    render_props.n_renders = n_snapshot
+    render_props.image_names = [png_name_snapshot % i for i in inds_snapshot]
+    render_props.pos = p[:,inds_snapshot]
+    render_props.quat = q[:,inds_snapshot]
+    render_props.lighting_energy = lighting_energy
+    render_props.world_RGB = np.repeat(world_RGB[:,np.newaxis], n_ims, axis=1)
+    render_props.transparent = trans
+    with open(to_render_pkl, 'wb') as output:
+        pickle.dump(render_props, output, pickle.HIGHEST_PROTOCOL)
+    blender_render(save_dir)
 
     # overlay snapshots
     im_file_0 = os.path.join(save_dir,

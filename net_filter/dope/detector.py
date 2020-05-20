@@ -43,7 +43,7 @@ transform = transforms.Compose([
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])
 
-use_cpu = True # TDA: use CPU instead of GPU?
+use_cpu = False # TDA: use CPU instead of GPU?
 if use_cpu:
     os.environ["CUDA_VISIBLE_DEVICES"]=""
 #================================ Models ================================

@@ -11,9 +11,9 @@ import os.path
 import sys
 import math
 import pickle
+import numpy as np
 
 import net_filter.directories as dirs
-import net_filter.blender.functions as bf
 
 # get arguments, see:
 # https://blender.stackexchange.com/questions/6817/how-to-pass-command-line-arguments-to-a-blender-python-script
@@ -31,19 +31,20 @@ render_props.save_dir = data_dir
 blender_models_dir = dirs.blender_models_dir
 blend_file = os.path.join(blender_models_dir, render_props.model_name+'.blend')
 bpy.ops.wm.open_mainfile(filepath=blend_file)
+
+# object
 ob_name = 'all_parts'
 ob = bpy.data.objects[ob_name]
-render_props.ob = ob
+ob.rotation_mode = 'QUATERNION'
 
 # camera
 camera_name = 'cam0'
 cam = bpy.data.cameras.new(camera_name)  # create a new camera
 cam_ob = bpy.data.objects.new(camera_name, cam)  # create a new camera object
-bpy.context.scene.camera = cam_ob  # set the active camera
-bpy.data.objects[camera_name].location = render_props.cam_pos
+bpy.context.scene.camera = cam_ob  # set the active camera to be the new camera
+cam_ob.location = render_props.cam_pos
 cam_ob.rotation_mode = 'QUATERNION'
-bpy.data.objects[camera_name].rotation_quaternion = render_props.cam_quat
-render_props.cam_ob = cam_ob
+cam_ob.rotation_quaternion = render_props.cam_quat
 
 # lens and sensor
 f = 50 # focal length, Blender default
@@ -59,12 +60,46 @@ bpy.data.scenes['Scene'].render.resolution_x = render_props.pix_width
 bpy.data.scenes['Scene'].render.resolution_y = render_props.pix_height
 bpy.data.scenes['Scene'].render.resolution_percentage = 100
 bpy.data.scenes['Scene'].render.image_settings.file_format = 'PNG'
-bpy.data.scenes['Scene'].render.image_settings.color_mode = 'RGBA'
-bpy.data.scenes['Scene'].cycles.film_transparent = True
+bpy.data.scenes['Scene'].render.image_settings.color_mode = 'RGB'
+bpy.data.scenes['Scene'].cycles.film_transparent = False
 bpy.data.scenes['Scene'].render.engine = 'CYCLES'
-#bpy.data.scenes['Scene'].render.engine = 'BLENDER_EEVEE'
+#bpy.data.scenes['Scene'].render.engine = 'BLENDER_EEVEE' # this is faster
 bpy.data.scenes['Scene'].cycles.device = 'GPU'
-#bpy.context.scene.cycles.device = 'GPU'
 
-# render pose
-bf.render_pose(render_props)
+# lighting energy
+if render_props.lighting_energy is not None:
+    for light in bpy.data.lights:
+        light.energy = render_props.lighting_energy
+
+# loop through poses to generate images
+for i in range(render_props.n_renders):
+
+    # different world color?
+    if render_props.world_RGB is not None:
+        world_RGB_i = render_props.world_RGB[:, i]
+        A = np.array([1.0]) # alpha for world RGBA lighting
+        RGBA = np.concatenate((world_RGB_i, A))
+        bpy.data.worlds['World'].node_tree.nodes['Background'].inputs[0].default_value = RGBA
+   
+    # transparent background?
+    if (render_props.transparent is not None) and (render_props.transparent[i]):
+        bpy.data.scenes['Scene'].render.image_settings.color_mode = 'RGBA'
+        bpy.data.scenes['Scene'].render.film_transparent = True
+    else:
+        bpy.data.scenes['Scene'].render.image_settings.color_mode = 'RGB'
+        bpy.data.scenes['Scene'].cycles.film_transparent = False
+
+    # object location and rotation
+    ob.location = render_props.pos[:,i]
+    ob.rotation_quaternion = render_props.quat[:,i]
+
+    # set the file to save to
+    if render_props.image_names is None:
+        image_file_name_i = '%06d.png' % i # generic numerical name
+    else:
+        image_file_name_i = render_props.image_names[i]
+    image_file_i = os.path.join(render_props.save_dir, image_file_name_i)
+    bpy.data.scenes['Scene'].render.filepath = image_file_i
+
+    # render the image
+    bpy.ops.render.render(write_still=True)

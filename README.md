@@ -47,7 +47,7 @@ Run (the first command takes over an hour on my computer):
 
 * In this project, we considered our object of interest to be the soup can from the YCB dataset. The blender model we used is located in the directory `blender_models/soup_can.blend`. This model was created by downloading a laser scan model from [this page](http://ycb-benchmarks.s3-website-us-east-1.amazonaws.com/), opening it in Blender, and converting it to Blender's `.blend` format.
 
-* This code is designed to use CUDA. If CUDA is not available on your computer, you should be able to use the cpu by changing `use_cpu` to `True` in `net_filter/dope/detector.py`
+* By default, this code will use CUDA for both the generation of images using Blender, and the evaluation of the images using DOPE. If CUDA is not available on your computer, you should be able to use the CPU by changing `use_cpu` to `True` in `net_filter/dope/detector.py`. This should make both Blender and DOPE use the CPU.
 
 
 ## extra
