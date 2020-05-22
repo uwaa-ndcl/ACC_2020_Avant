@@ -42,7 +42,7 @@ for i in range(n_trials):
 
     # rigid body dynamics
     R0 = R0_all[:,:,i]
-    p, R, pdot, om = rb.integrate(t, p0, R0, pdot0, om0)
+    p, R, pdot, om = rb.integrate(p0, R0, pdot0, om0, t)
 
     # regenerate and re-evaluate images?
     regen = 1

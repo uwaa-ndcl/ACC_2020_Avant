@@ -43,7 +43,7 @@ def newton_euler(t, pdot_om):
     return pdot_omdot
 
 
-def integrate(t_out, p0, R0, pdot0, om0):
+def integrate(p0, R0, pdot0, om0, t_out):
     '''
     integrate Newton-Euler equations, then integrate kinematics
     t_out = times at which to return states
@@ -56,7 +56,7 @@ def integrate(t_out, p0, R0, pdot0, om0):
 
     # integration times
     dt = .001
-    t = np.arange(t0, tf_out+dt, dt) # tf+dt makes sure tf is included
+    t = np.arange(t0, tf_out+dt, dt) # tf_out+dt: make sure tf_out is included
     tf = t[-1]
     n_t = t.size
 

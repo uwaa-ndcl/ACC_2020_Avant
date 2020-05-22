@@ -12,7 +12,7 @@ def f(p_prev, R_prev, pdot_prev, om_prev, w, u, dt):
     '''
     
     t = np.array([0, dt])
-    p, R, pdot, om = rb.integrate(t, p_prev, R_prev, pdot_prev, om_prev)
+    p, R, pdot, om = rb.integrate(p_prev, R_prev, pdot_prev, om_prev, t)
 
     return p[:,-1], R[:,:,-1], pdot[:,-1], om[:,-1]
 

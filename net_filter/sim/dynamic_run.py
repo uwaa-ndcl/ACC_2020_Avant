@@ -27,10 +27,10 @@ pdot0 = np.array([0.9, 1.1, 2.3])
 om0 = np.array([5, 8, 4])
 
 # rigid body dynamics
-p, R, pdot, om  = rb.integrate(t, p0, R0, pdot0, om0)
+p, R, pdot, om  = rb.integrate(p0, R0, pdot0, om0, t)
 
 # regenerate and re-evaluate images?
-regen = 1
+regen = 0
 if regen:
     # regenerate images
     br.soup_gen(dt, p, R, img_dir)
