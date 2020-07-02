@@ -30,6 +30,8 @@ Trevor Avant & Kristi A. Morgansen, *American Control Conference (ACC) 2020*
 ## code
 
 **1-d motions (Figure 3)**:
+
+Run the command below (takes about 5 min on my computer):
 * `python net_filter/sim/one_dim_gen.py`
 
 **covariances (Figure 4)**:
@@ -39,7 +41,10 @@ Run the following sequence of commands twice: once with `mode = dim` and once wi
 * `python net_filter/sim/cov_calc.py`
 
 **simulation (Figure 5 \& Figure 6)**:
+
+Run the command below (takes about 1 min on my computer):
 * `python net_filter/sim/dynamic_run.py`
+The plots will be saved in the `results/paper_figs/` directory. Also note that if you don't want to regenerate the images after initially running this script, set `regen = 0` for subsequent runs.
 
 **monte carlo simulations (Table I)**: 
 

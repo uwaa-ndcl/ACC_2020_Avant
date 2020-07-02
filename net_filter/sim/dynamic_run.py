@@ -30,7 +30,7 @@ om0 = np.array([5, 8, 4])
 p, R, pdot, om  = rb.integrate(p0, R0, pdot0, om0, t)
 
 # regenerate and re-evaluate images?
-regen = 0
+regen = 1
 if regen:
     # regenerate images
     br.soup_gen(dt, p, R, img_dir)

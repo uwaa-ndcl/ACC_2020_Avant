@@ -73,7 +73,7 @@ def plot_errors():
     pp.savefig(os.path.join(dirs.paper_figs_dir, 'simulation_errors.png'),
                dpi=300)
 
-    pp.show()
+    #pp.show()
 
 
 def plot_3sigma():
@@ -148,7 +148,7 @@ def plot_3sigma():
     pp.ylabel('error [\\textdegree]', fontsize=xlabel_font_size)
     file_name = os.path.join(dirs.paper_figs_dir, 'simulation_sigma_bounds.png')
     pp.savefig(file_name, dpi=300)
-    pp.show()
+    #pp.show()
 
 
 def plot_velocities():
@@ -242,4 +242,4 @@ def plot_velocities():
     # save
     file_name = os.path.join(dirs.paper_figs_dir, 'simulation_velocities.png')
     pp.savefig(file_name, dpi=300)
-    pp.show()
+    #pp.show()
