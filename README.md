@@ -50,16 +50,16 @@ Run these commands (the first command will generate 100 trajectories, and takes 
 
 ## extra
 
-**test the filter with synthetic measurements (i.e. the true measurements plus some random noise)**
+**test the filter with synthetic measurements (i.e. the true measurements plus some random noise)**;
 * `python net_filter/tests/filter_test.py`
 
-**make the GIF**
+**make the GIF**:
 
 Run the following commands (note: the second command requires `imagemagick` and `ffmpeg` to be installed):
 * `python net_filter/sim/video_comparison_boxes.py`
 * `python net_filter/sim/video_comparison_two_vids_plot.py`
 
-**apply DOPE to all images in a folder**
+**apply DOPE to all images in a directory**:
 * `python net_filter/tests/eval_test.py`
 
 ## notes
