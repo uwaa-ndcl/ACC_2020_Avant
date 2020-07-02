@@ -1,3 +1,5 @@
+# run shell commands to make a GIF in showing frames of neural net estimates,
+# frames of filter estimates, and plots of the position & rotation errors
 import os
 import glob
 import subprocess

@@ -1,3 +1,5 @@
+# run shell commands to put frames of raw video, network estimates, and
+# filter estimates side-by-side
 import os
 import glob
 import subprocess

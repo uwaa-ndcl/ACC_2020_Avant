@@ -56,8 +56,8 @@ Run these commands (the first command will generate 100 trajectories, and takes 
 **make the GIF**
 
 Run the following commands (note: the second command requires `imagemagick` and `ffmpeg` to be installed):
-* `python net_filter/sim/box_gen.py`
-* `python net_filter/sim/box_video_comparison.py`
+* `python net_filter/sim/video_comparison_boxes.py`
+* `python net_filter/sim/video_comparison_two_vids_plot.py`
 
 **apply DOPE to all images in a folder**
 * `python net_filter/tests/eval_test.py`

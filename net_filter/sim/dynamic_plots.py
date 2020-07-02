@@ -173,9 +173,9 @@ def plot_velocities():
     # velocity
     sp1 = pp.subplot(2,1,1)
     sp1.set_title('translational velocity errors', fontsize=title_font_size)
-    pp.plot(t, pdot_err[0,:], 'y', label='$| \hat{\dot{p}}_1 - \dot{p}_1 |$')
-    pp.plot(t, pdot_err[1,:], 'm', label='$| \hat{\dot{p}}_2 - \dot{p}_2 |$')
-    pp.plot(t, pdot_err[2,:], 'c', label='$| \hat{\dot{p}}_3 - \dot{p}_3 |$')
+    sp1.plot(t, pdot_err[0,:], 'y', label='$| \hat{\dot{p}}_1 - \dot{p}_1 |$')
+    sp1.plot(t, pdot_err[1,:], 'm', label='$| \hat{\dot{p}}_2 - \dot{p}_2 |$')
+    sp1.plot(t, pdot_err[2,:], 'c', label='$| \hat{\dot{p}}_3 - \dot{p}_3 |$')
 
     # labels
     pp.xlabel('time [s]', fontsize=xlabel_font_size)
@@ -187,9 +187,9 @@ def plot_velocities():
     # angular velocity
     sp2 = pp.subplot(2,1,2)
     sp2.set_title('rotational velocity errors', fontsize=title_font_size)
-    pp.plot(t, om_err[0,:], 'y', label='$| \hat{\omega}_1 - \omega_1 |$')
-    pp.plot(t, om_err[1,:], 'm', label='$| \hat{\omega}_2 - \omega_2 |$')
-    pp.plot(t, om_err[2,:], 'c', label='$| \hat{\omega}_3 - \omega_3 |$')
+    sp2.plot(t, om_err[0,:], 'y', label='$| \hat{\omega}_1 - \omega_1 |$')
+    sp2.plot(t, om_err[1,:], 'm', label='$| \hat{\omega}_2 - \omega_2 |$')
+    sp2.plot(t, om_err[2,:], 'c', label='$| \hat{\omega}_3 - \omega_3 |$')
 
     # labels
     pp.ylim([-5, 80])
@@ -198,6 +198,46 @@ def plot_velocities():
     pp.xticks(fontsize=tick_font_size)
     pp.yticks(fontsize=tick_font_size)
     pp.legend(fontsize=legend_font_size, loc='upper right')
+
+    # plot network's estimates of velocities based on a finite difference
+    plot_fd = 0
+    if plot_fd:
+        dt = t[1]-t[0]
+        pdot = dat['pdot']
+        p_meas = dat['p_meas']
+        R = dat['R']
+        R_meas = dat['R_meas']
+        t_fd = t[1:]
+        n_fd = t_fd.size
+        n_t = t.size
+
+        p_meas_min1 = np.roll(p_meas, 1, axis=1)
+        pdot_meas = (p_meas - p_meas_min1)/dt
+        pdot_meas_err = np.abs(pdot - pdot_meas)
+        pdot_meas_err = pdot_meas_err[:,1:]
+        
+        sp1.plot(t_fd, pdot_meas_err[0,:], 'y:') 
+        sp1.plot(t_fd, pdot_meas_err[1,:], 'm:') 
+        sp1.plot(t_fd, pdot_meas_err[2,:], 'c:') 
+        print(np.min(pdot_meas_err))
+
+        import net_filter.tools.so3 as so3 
+        import net_filter.tools.unit_conversion as conv 
+        dist = np.full(n_fd, np.nan)
+        s = np.full((3,n_t), np.nan)
+        s_meas = np.full((3,n_t), np.nan)
+        for i in range(n_t):
+            s_meas[:,i] = so3.skew_elements(so3.log(R_meas[:,:,i]))
+        s_meas_min1 = np.roll(s_meas, 1, axis=1)
+        om_meas = (s_meas - s_meas_min1)/dt 
+        om_meas_err = np.abs(om - om_meas)
+        om_meas_err *= conv.rad_to_deg 
+        om_meas_err = om_meas_err[:,1:]
+
+        import pdb; pdb.set_trace()
+        sp2.plot(t_fd, om_meas_err[0,:], 'y:') 
+        sp2.plot(t_fd, om_meas_err[1,:], 'm:') 
+        sp2.plot(t_fd, om_meas_err[2,:], 'c:') 
 
     # save
     file_name = os.path.join(dirs.paper_figs_dir, 'simulation_velocities.png')
