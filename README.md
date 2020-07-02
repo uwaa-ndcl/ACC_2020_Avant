@@ -44,6 +44,7 @@ Run the following sequence of commands twice: once with `mode = dim` and once wi
 
 Run the command below (takes about 1 min on my computer):
 * `python net_filter/sim/dynamic_run.py`
+
 The plots will be saved in the `results/paper_figs/` directory. Also note that if you don't want to regenerate the images after initially running this script, set `regen = 0` for subsequent runs.
 
 **monte carlo simulations (Table I)**: 
