@@ -6,7 +6,7 @@
 
 This is the code for the paper
 
-**Rigid Body Dynamics Estimation by Unscented Filtering Pose Estimation Neural Networks**
+[**Rigid Body Dynamics Estimation by Unscented Filtering Pose Estimation Neural Networks**](https://ieeexplore.ieee.org/document/9147262)
 
 Trevor Avant & Kristi A. Morgansen, *American Control Conference (ACC) 2020*
 
