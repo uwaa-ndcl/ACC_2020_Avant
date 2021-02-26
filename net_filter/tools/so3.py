@@ -59,7 +59,10 @@ def geodesic_distance(R1, R2):
     geodesic distance between two rotation matrices
     '''
 
-    dist = (1/np.sqrt(2)) * np.linalg.norm(log(R1.T @ R2), ord='fro')
+    if np.all(R1==R2):
+        dist = 0
+    else:
+        dist = (1/np.sqrt(2)) * np.linalg.norm(log(R1.T @ R2), ord='fro')
 
     return dist
 
